@@ -32,3 +32,7 @@ business row carries `tenant_id` and is protected by RLS.
 - RLS helper functions live in schema `app_private` (not exposed via PostgREST).
 - `deposit_events` and `audit_logs` are append-only (triggers block UPDATE/DELETE).
 - Business dates are explicit (`operating_days.business_date`); never derive from UTC timestamps.
+- New Supabase projects grant **no** table privileges to API roles by default. Migration
+  0004 grants `authenticated` SELECT, `service_role` ALL (plus default privileges for
+  future tables). `anon` gets nothing. Keep it that way.
+- `profiles` rows are auto-created by the `on_auth_user_created` trigger (migration 0003).
