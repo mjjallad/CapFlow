@@ -155,7 +155,17 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
                   <td className="px-3 py-2 tabular-nums" dir="ltr">{formatMoney(c.expected_amount, currency)}</td>
                   <td className="px-3 py-2 tabular-nums" dir="ltr">{formatMoney(c.deposited_amount, currency)}</td>
                   <td className="px-3 py-2 tabular-nums" dir="ltr">
-                    {c.withdrawn_amount === null ? "—" : formatMoney(c.withdrawn_amount, currency)}
+                    {c.withdrawn_amount === null ? (
+                      "—"
+                    ) : c.withdrawn_amount < 0 ? (
+                      <span className="text-emerald-700 dark:text-emerald-300">
+                        زيادة {formatMoney(-c.withdrawn_amount, currency)}
+                      </span>
+                    ) : c.withdrawn_amount > (c.allowed_deduction ?? 0) + 0.0005 ? (
+                      <span className="text-danger">{formatMoney(c.withdrawn_amount, currency)}</span>
+                    ) : (
+                      formatMoney(c.withdrawn_amount, currency)
+                    )}
                   </td>
                   <td className="px-3 py-2 text-xs text-muted" dir="ltr">{formatDateTime(c.deposited_at, tz)}</td>
                   {canRecord && (
