@@ -42,3 +42,20 @@ business row carries `tenant_id` and is protected by RLS.
 - Phones are canonical E.164 (`+9627XXXXXXXX`) via `src/lib/phone.ts` everywhere.
 - Permissions: `src/lib/auth/permissions.ts` (`can(role, permission)`); pages call
   `requireTenant(permission)` from `src/lib/auth/context.ts`.
+
+## Daily cycle (business rules, confirmed with the operator)
+- Operating day D runs 16:30 on D → 16:30 on D+1 (`tenants.day_start_time`). The morning
+  COD file is dated D+1 but belongs to D (`suggestCodBusinessDate`).
+- Sources: **COD** `Rider details.xlsx` (authoritative attendance + `collected_amount` =
+  `actual_amount`), **Rider** `Rider Performance.xlsx` (`completed_deliveries`, only
+  `Working Days = 1` rows are staged), captain deposit (manual now, WhatsApp later).
+  The night Review CSV is not imported (COD supersedes it).
+- Money: `expected = collected − deduction_rate × deliveries − payout_deduction`;
+  `withdrawn = collected − deposited` is always recorded. deposited ≥ expected → `matched`,
+  else `review_required` (needs a payouts screenshot). Rate lives on `captains.deduction_rate`
+  (0 / 0.5 / 1, set by supervisor) and is snapshotted onto the case at creation.
+- Deadlines: deposit by 01:30 on D+1 (`is_late`), grace to 11:50, then `escalated` to the
+  parent platform (account restricted 12:00). Time-based transitions are not automated yet.
+- Absence is implicit: no COD/Rider row → no attendance row. Never materialize "leave" rows.
+- Apply functions: `apply_cod_batch`, `apply_rider_batch`, `record_deposit`,
+  `app_private.evaluate_deposit_case`. `operating_day_summaries` view feeds `/days`.

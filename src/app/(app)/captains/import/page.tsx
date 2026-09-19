@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireTenant } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/server";
 import { UploadForm } from "./upload-form";
-import { BatchStatusBadge } from "./batch-status";
+import { BatchStatusBadge } from "@/components/batch-status";
 
 export default async function CaptainsImportPage() {
   await requireTenant("captains.import");

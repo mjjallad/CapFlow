@@ -210,6 +210,7 @@ export type Database = {
           archived_at: string | null
           city_id: string | null
           created_at: string
+          deduction_rate: number
           external_user_id: string | null
           full_name: string
           group_label: string | null
@@ -227,6 +228,7 @@ export type Database = {
           archived_at?: string | null
           city_id?: string | null
           created_at?: string
+          deduction_rate?: number
           external_user_id?: string | null
           full_name: string
           group_label?: string | null
@@ -244,6 +246,7 @@ export type Database = {
           archived_at?: string | null
           city_id?: string | null
           created_at?: string
+          deduction_rate?: number
           external_user_id?: string | null
           full_name?: string
           group_label?: string | null
@@ -317,32 +320,41 @@ export type Database = {
         Row: {
           actual_amount: number | null
           captain_id: string
+          cod_collected_amount: number | null
           created_at: string
           id: string
           import_batch_id: string | null
           operating_day_id: string
+          paid_at_pickup_amount: number | null
           tenant_id: string
           updated_at: string
+          wallet_balance: number | null
         }
         Insert: {
           actual_amount?: number | null
           captain_id: string
+          cod_collected_amount?: number | null
           created_at?: string
           id?: string
           import_batch_id?: string | null
           operating_day_id: string
+          paid_at_pickup_amount?: number | null
           tenant_id: string
           updated_at?: string
+          wallet_balance?: number | null
         }
         Update: {
           actual_amount?: number | null
           captain_id?: string
+          cod_collected_amount?: number | null
           created_at?: string
           id?: string
           import_batch_id?: string | null
           operating_day_id?: string
+          paid_at_pickup_amount?: number | null
           tenant_id?: string
           updated_at?: string
+          wallet_balance?: number | null
         }
         Relationships: [
           {
@@ -377,12 +389,17 @@ export type Database = {
       }
       deposit_cases: {
         Row: {
+          allowed_deduction: number | null
           captain_id: string
           collected_amount: number | null
           completed_deliveries: number | null
           created_at: string
+          deduction_rate: number
           deposited_amount: number | null
+          deposited_at: string | null
           distance_km: number | null
+          escalated_at: string | null
+          expected_amount: number | null
           finalized_at: string | null
           finalized_by: string | null
           id: string
@@ -391,18 +408,26 @@ export type Database = {
           operating_day_id: string
           original_operating_day_id: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
+          payout_deduction: number
+          review_reason: string | null
           status: Database["public"]["Enums"]["deposit_status"]
           tenant_id: string
           updated_at: string
           variance_amount: number | null
+          withdrawn_amount: number | null
         }
         Insert: {
+          allowed_deduction?: number | null
           captain_id: string
           collected_amount?: number | null
           completed_deliveries?: number | null
           created_at?: string
+          deduction_rate?: number
           deposited_amount?: number | null
+          deposited_at?: string | null
           distance_km?: number | null
+          escalated_at?: string | null
+          expected_amount?: number | null
           finalized_at?: string | null
           finalized_by?: string | null
           id?: string
@@ -411,18 +436,26 @@ export type Database = {
           operating_day_id: string
           original_operating_day_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          payout_deduction?: number
+          review_reason?: string | null
           status?: Database["public"]["Enums"]["deposit_status"]
           tenant_id: string
           updated_at?: string
           variance_amount?: number | null
+          withdrawn_amount?: number | null
         }
         Update: {
+          allowed_deduction?: number | null
           captain_id?: string
           collected_amount?: number | null
           completed_deliveries?: number | null
           created_at?: string
+          deduction_rate?: number
           deposited_amount?: number | null
+          deposited_at?: string | null
           distance_km?: number | null
+          escalated_at?: string | null
+          expected_amount?: number | null
           finalized_at?: string | null
           finalized_by?: string | null
           id?: string
@@ -431,10 +464,13 @@ export type Database = {
           operating_day_id?: string
           original_operating_day_id?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          payout_deduction?: number
+          review_reason?: string | null
           status?: Database["public"]["Enums"]["deposit_status"]
           tenant_id?: string
           updated_at?: string
           variance_amount?: number | null
+          withdrawn_amount?: number | null
         }
         Relationships: [
           {
@@ -1186,9 +1222,14 @@ export type Database = {
           business_day_cutoff: string
           created_at: string
           currency_code: string
+          day_start_time: string
+          deposit_deadline_time: string
+          grace_deadline_time: string
           id: string
           is_active: boolean
           name: string
+          payroll_cutoff_dow: number
+          payroll_cutoff_time: string
           slug: string
           timezone: string
           updated_at: string
@@ -1197,9 +1238,14 @@ export type Database = {
           business_day_cutoff?: string
           created_at?: string
           currency_code?: string
+          day_start_time?: string
+          deposit_deadline_time?: string
+          grace_deadline_time?: string
           id?: string
           is_active?: boolean
           name: string
+          payroll_cutoff_dow?: number
+          payroll_cutoff_time?: string
           slug: string
           timezone?: string
           updated_at?: string
@@ -1208,9 +1254,14 @@ export type Database = {
           business_day_cutoff?: string
           created_at?: string
           currency_code?: string
+          day_start_time?: string
+          deposit_deadline_time?: string
+          grace_deadline_time?: string
           id?: string
           is_active?: boolean
           name?: string
+          payroll_cutoff_dow?: number
+          payroll_cutoff_time?: string
           slug?: string
           timezone?: string
           updated_at?: string
@@ -1219,11 +1270,54 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      operating_day_summaries: {
+        Row: {
+          awaiting: number | null
+          business_date: string | null
+          cases: number | null
+          collected_total: number | null
+          deposited_total: number | null
+          expected_total: number | null
+          operating_day_id: string | null
+          overdue: number | null
+          review: number | null
+          settled: number | null
+          status: Database["public"]["Enums"]["operating_day_status"] | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operating_days_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       apply_captains_batch: {
         Args: { p_actor: string; p_batch_id: string }
+        Returns: Json
+      }
+      apply_cod_batch: {
+        Args: { p_actor: string; p_batch_id: string }
+        Returns: Json
+      }
+      apply_rider_batch: {
+        Args: { p_actor: string; p_batch_id: string }
+        Returns: Json
+      }
+      record_deposit: {
+        Args: {
+          p_actor: string
+          p_amount: number
+          p_case_id: string
+          p_deposited_at: string | null
+          p_method: Database["public"]["Enums"]["payment_method"] | null
+          p_note: string | null
+        }
         Returns: Json
       }
     }
@@ -1256,6 +1350,7 @@ export type Database = {
         | "rejected"
         | "late"
         | "cancelled"
+        | "escalated"
       evidence_status:
         | "received"
         | "processed"
@@ -1268,13 +1363,14 @@ export type Database = {
         | "pdf_receipt"
         | "text_deposit"
         | "unknown"
+        | "payout_screenshot"
       extraction_status:
         | "queued"
         | "processing"
         | "succeeded"
         | "failed"
         | "needs_review"
-      import_kind: "captains" | "attendance" | "cod"
+      import_kind: "captains" | "attendance" | "cod" | "rider"
       import_status:
         | "uploaded"
         | "validating"
@@ -1457,6 +1553,7 @@ export const Constants = {
         "rejected",
         "late",
         "cancelled",
+        "escalated",
       ],
       evidence_status: [
         "received",
@@ -1471,6 +1568,7 @@ export const Constants = {
         "pdf_receipt",
         "text_deposit",
         "unknown",
+        "payout_screenshot",
       ],
       extraction_status: [
         "queued",
@@ -1479,7 +1577,7 @@ export const Constants = {
         "failed",
         "needs_review",
       ],
-      import_kind: ["captains", "attendance", "cod"],
+      import_kind: ["captains", "attendance", "cod", "rider"],
       import_status: [
         "uploaded",
         "validating",

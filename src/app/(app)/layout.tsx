@@ -12,6 +12,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <Link href="/" className="font-semibold">
               CapFlow
             </Link>
+            <Link href="/days" className="text-sm text-muted hover:text-foreground">
+              الأيام
+            </Link>
             <Link href="/captains" className="text-sm text-muted hover:text-foreground">
               الكباتن
             </Link>

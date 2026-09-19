@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireTenant } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/server";
 import type { NormalizedCaptain } from "@/lib/imports/captains/parse";
-import { BatchStatusBadge } from "../batch-status";
+import { BatchStatusBadge } from "@/components/batch-status";
 import { ApplyForm } from "./apply-form";
 
 const PREVIEW_LIMIT = 300;
