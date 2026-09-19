@@ -74,7 +74,7 @@ export default async function DailyBatchPage({ params }: PageProps<"/days/import
           <p className="text-sm">
             {kind === "cod"
               ? "لكل كابتن معروف: يُسجَّل حاضرًا، يُحفظ المبلغ المطلوب، وتُفتح حالة إيداع بانتظار الإيصال."
-              : "لكل كابتن معروف: تُضاف التوصيلات إلى حالة اليوم؛ ومن عمل بلا COD تُفتح له حالة بانتظار السجل."}
+              : "لكل كابتن معروف: تُضاف التوصيلات إلى حالة اليوم؛ ومن عمل ولم يظهر في COD يُسجَّل «فيزا — لا كاش عليه»."}
           </p>
           <DailyApplyForm batchId={batch.id} kind={kind} businessDate={businessDate} validCount={batch.accepted_rows} />
         </section>

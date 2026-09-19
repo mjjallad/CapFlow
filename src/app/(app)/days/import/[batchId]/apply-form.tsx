@@ -7,7 +7,7 @@ import { applyDailyBatch, type DailyApplyState } from "../actions";
 const RESULT_LABELS: Record<string, string> = {
   applied: "صف طُبّق",
   skipped: "كابتن غير معروف تم تخطّيه",
-  without_cod: "عمل بلا COD (بانتظار السجل)",
+  visa_only: "فيزا فقط (لا كاش عليه)",
 };
 
 export function DailyApplyForm({

@@ -57,5 +57,7 @@ business row carries `tenant_id` and is protected by RLS.
 - Deadlines: deposit by 01:30 on D+1 (`is_late`), grace to 11:50, then `escalated` to the
   parent platform (account restricted 12:00). Time-based transitions are not automated yet.
 - Absence is implicit: no COD/Rider row → no attendance row. Never materialize "leave" rows.
+- Worked (Rider) but absent from COD = card-only day: case with collected 0, payment_method
+  visa, matched. `awaiting_sijil` is only for days where the COD file never arrived.
 - Apply functions: `apply_cod_batch`, `apply_rider_batch`, `record_deposit`,
   `app_private.evaluate_deposit_case`. `operating_day_summaries` view feeds `/days`.

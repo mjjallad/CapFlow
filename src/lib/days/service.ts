@@ -89,7 +89,7 @@ export async function applyRiderBatch(input: { tenantId: string; userId: string;
   const admin = createAdminClient();
   const rpc = await admin.rpc("apply_rider_batch", { p_batch_id: input.batchId, p_actor: input.userId });
   if (rpc.error) throw new Error(`فشل التطبيق: ${rpc.error.message}`);
-  return rpc.data as { applied: number; without_cod: number; skipped: number };
+  return rpc.data as { applied: number; visa_only: number; skipped: number };
 }
 
 export async function recordDeposit(input: {

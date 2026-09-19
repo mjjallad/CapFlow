@@ -55,6 +55,6 @@ describe.skipIf(!enabled)("daily cycle (integration)", () => {
       .eq("business_date", businessDate)
       .single();
     console.log("Day summary:", JSON.stringify(summary));
-    expect(summary!.cases).toBe(codResult.applied + riderResult.without_cod);
+    expect(summary!.cases).toBe(codResult.applied + riderResult.visa_only);
   }, 180_000);
 });

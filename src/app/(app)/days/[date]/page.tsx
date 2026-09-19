@@ -11,7 +11,7 @@ const PAGE_SIZE = 200;
 
 // Tabs map to status groups; "all" shows everything for the day.
 const TABS: { key: string; label: string; statuses: DepositStatus[] | null }[] = [
-  { key: "open", label: "بانتظار", statuses: ["awaiting_receipt", "awaiting_sijil"] },
+  { key: "open", label: "بانتظار الإيداع", statuses: ["awaiting_receipt", "awaiting_sijil"] },
   { key: "overdue", label: "متأخر / مُصعَّد", statuses: ["late", "escalated"] },
   { key: "review", label: "مراجعة", statuses: ["review_required"] },
   { key: "settled", label: "مُسوّى", statuses: ["matched", "approved"] },
@@ -46,8 +46,8 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
       { count: "exact" },
     )
     .eq("operating_day_id", day.operating_day_id!)
-    .order("status")
     .order("collected_amount", { ascending: false, nullsFirst: false })
+    .order("status")
     .range((pageNumber - 1) * PAGE_SIZE, pageNumber * PAGE_SIZE - 1);
 
   if (tab.statuses) request = request.in("status", tab.statuses);
@@ -139,6 +139,7 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
                   </td>
                   <td className="px-3 py-2">
                     <DepositStatusBadge status={c.status} />
+                    {c.payment_method === "visa" && <div className="mt-1 text-xs text-muted">فيزا — لا كاش عليه</div>}
                     {c.is_late && <div className="mt-1 text-xs text-orange-700 dark:text-orange-300">متأخر</div>}
                     {c.review_reason && <div className="mt-1 max-w-48 text-xs text-muted">{c.review_reason}</div>}
                   </td>
