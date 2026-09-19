@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getAppContext } from "@/lib/auth/context";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
@@ -7,7 +8,14 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
     <>
       <header className="border-b border-border bg-surface">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <div className="font-semibold">CapFlow</div>
+          <nav className="flex items-center gap-5">
+            <Link href="/" className="font-semibold">
+              CapFlow
+            </Link>
+            <Link href="/captains" className="text-sm text-muted hover:text-foreground">
+              الكباتن
+            </Link>
+          </nav>
           <div className="flex items-center gap-3 text-sm">
             <span className="text-muted" dir="ltr">
               {ctx.email}

@@ -1222,7 +1222,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      apply_captains_batch: {
+        Args: { p_actor: string; p_batch_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role:

@@ -36,3 +36,9 @@ business row carries `tenant_id` and is protected by RLS.
   0004 grants `authenticated` SELECT, `service_role` ALL (plus default privileges for
   future tables). `anon` gets nothing. Keep it that way.
 - `profiles` rows are auto-created by the `on_auth_user_created` trigger (migration 0003).
+- Imports: `src/lib/imports/<kind>/parse.ts` is pure and unit-tested (`npm test`);
+  `service.ts` stages rows via the admin client; applying is a single Postgres function
+  (`apply_<kind>_batch`, SECURITY INVOKER, service_role only) so it is atomic.
+- Phones are canonical E.164 (`+9627XXXXXXXX`) via `src/lib/phone.ts` everywhere.
+- Permissions: `src/lib/auth/permissions.ts` (`can(role, permission)`); pages call
+  `requireTenant(permission)` from `src/lib/auth/context.ts`.

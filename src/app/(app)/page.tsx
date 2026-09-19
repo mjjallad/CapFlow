@@ -10,8 +10,9 @@ const ROLE_LABELS: Record<string, string> = {
   viewer: "مشاهد",
 };
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: PageProps<"/">) {
   const ctx = await getAppContext();
+  const { forbidden } = await searchParams;
 
   if (ctx.memberships.length === 0) {
     return (
@@ -26,6 +27,11 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {forbidden && (
+        <p role="alert" className="rounded-md bg-amber-100 px-4 py-3 text-sm text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
+          ليس لديك صلاحية للوصول إلى تلك الصفحة.
+        </p>
+      )}
       <h1 className="text-xl font-semibold">شركاتك</h1>
       <ul className="grid gap-3 sm:grid-cols-2">
         {ctx.memberships.map((m) => (
