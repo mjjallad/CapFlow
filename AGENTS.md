@@ -15,7 +15,7 @@ business row carries `tenant_id` and is protected by RLS.
 
 ## Stack
 - Next.js 16 App Router + TypeScript + Tailwind v4, Arabic RTL UI (`lang="ar" dir="rtl"`).
-- Supabase project `deposit-saas` (`lmcrxbobwhzzqxxzgbqt`, eu-central-1, Postgres 17).
+- Supabase project `CapFlow` (`mtrzckcqmgbxlnvkenpk`, eu-central-1, Postgres 17) in the `mjjallad0@gmail.com` account.
 - Schema lives in `supabase/migrations/*.sql`; applied via the Supabase MCP `apply_migration`.
   Regenerate `src/lib/supabase/database.types.ts` after every schema change.
 
