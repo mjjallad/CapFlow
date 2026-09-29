@@ -5,32 +5,77 @@ import type { Database, Json } from "@/lib/supabase/database.types";
 import { normalizeJordanPhone } from "@/lib/phone";
 
 type CaptainStatus = Database["public"]["Enums"]["captain_status"];
-type VehicleType = Database["public"]["Enums"]["vehicle_type"];
+type VehicleKind = Database["public"]["Enums"]["vehicle_kind"];
+type DocumentKind = Database["public"]["Enums"]["captain_document_kind"];
 
 const PHOTO_BUCKET = "captain-photos";
-const PHOTO_URL_TTL = 60 * 10; // seconds
+const DOCUMENT_BUCKET = "captain-documents";
+const SIGNED_URL_TTL = 60 * 10; // seconds
+
+/** A free-form identifier the office keeps, e.g. "رقم التأمين" → "12345". */
+export type Identifier = { label: string; value: string };
 
 export type CaptainEdit = {
   full_name: string;
   phone: string | null;
   external_user_id: string | null;
   national_id: string | null;
+  identifiers: Identifier[];
   team_id: string | null;
-  vehicle_type: VehicleType | null;
+  vehicle_kinds: VehicleKind[];
   whatsapp_group: string | null;
   service_center_name: string | null;
   city_id: string | null;
   status: CaptainStatus;
   deduction_rate: number;
+  contract_file_number: string | null;
+  activated_on: string | null;
   notes: string | null;
 };
 
-/** A short-lived link to the captain's photo, or null when there is none. */
-export async function photoUrl(path: string | null): Promise<string | null> {
+export type CaptainDocument = {
+  id: string;
+  kind: DocumentKind;
+  title: string | null;
+  originalFilename: string | null;
+  mimeType: string;
+  createdAt: string;
+  url: string | null;
+};
+
+async function signedUrl(bucket: string, path: string | null): Promise<string | null> {
   if (!path) return null;
   const admin = createAdminClient();
-  const { data } = await admin.storage.from(PHOTO_BUCKET).createSignedUrl(path, PHOTO_URL_TTL);
+  const { data } = await admin.storage.from(bucket).createSignedUrl(path, SIGNED_URL_TTL);
   return data?.signedUrl ?? null;
+}
+
+/** A short-lived link to the captain's photo, or null when there is none. */
+export function photoUrl(path: string | null): Promise<string | null> {
+  return signedUrl(PHOTO_BUCKET, path);
+}
+
+export async function listDocuments(input: { tenantId: string; captainId: string }): Promise<CaptainDocument[]> {
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("captain_documents")
+    .select("id, kind, title, original_filename, mime_type, storage_path, created_at")
+    .eq("tenant_id", input.tenantId)
+    .eq("captain_id", input.captainId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  return Promise.all(
+    (data ?? []).map(async (d) => ({
+      id: d.id,
+      kind: d.kind,
+      title: d.title,
+      originalFilename: d.original_filename,
+      mimeType: d.mime_type,
+      createdAt: d.created_at,
+      url: await signedUrl(DOCUMENT_BUCKET, d.storage_path),
+    })),
+  );
 }
 
 function clean(value: string | null | undefined): string | null {
@@ -58,18 +103,25 @@ export async function updateCaptain(input: {
   const phone = input.edit.phone ? normalizeJordanPhone(input.edit.phone) : null;
   if (input.edit.phone && !phone) throw new Error("رقم الهاتف غير صالح");
 
+  const identifiers = input.edit.identifiers
+    .map((i) => ({ label: i.label.trim(), value: i.value.trim() }))
+    .filter((i) => i.label || i.value);
+
   const patch = {
     full_name: input.edit.full_name.trim(),
     phone,
     external_user_id: clean(input.edit.external_user_id),
     national_id: clean(input.edit.national_id),
+    identifiers: identifiers as unknown as Json,
     team_id: input.edit.team_id,
-    vehicle_type: input.edit.vehicle_type,
+    vehicle_kinds: input.edit.vehicle_kinds,
     whatsapp_group: clean(input.edit.whatsapp_group),
     service_center_name: clean(input.edit.service_center_name),
     city_id: input.edit.city_id,
     status: input.edit.status,
     deduction_rate: input.edit.deduction_rate,
+    contract_file_number: clean(input.edit.contract_file_number),
+    activated_on: clean(input.edit.activated_on),
     notes: clean(input.edit.notes),
     // An edited captain has been looked at, so the review flag can go.
     needs_review: false,
@@ -80,28 +132,29 @@ export async function updateCaptain(input: {
 
   const { error } = await admin.from("captains").update(patch).eq("id", input.captainId);
   if (error) {
-    if (error.code === "23505") {
-      throw new Error("رقم الهاتف أو المعرّف مستخدم لكابتن آخر");
-    }
+    if (error.code === "23505") throw new Error("رقم الهاتف أو المعرّف مستخدم لكابتن آخر");
     throw new Error(`تعذّر الحفظ: ${error.message}`);
   }
 
   // Only the fields that actually moved go into the audit entry.
   const previous = before as Record<string, Json>;
   const changed = Object.fromEntries(
-    Object.entries(patch).filter(([key, value]) => previous[key] !== value),
+    Object.entries(patch).filter(([key, value]) => JSON.stringify(previous[key]) !== JSON.stringify(value)),
   ) as Record<string, Json>;
-  await admin.from("audit_logs").insert({
-    tenant_id: input.tenantId,
-    actor_user_id: input.userId,
-    action: "captain.updated",
-    module: "captains",
-    operation_context: "dashboard",
-    entity_type: "captain",
-    entity_id: input.captainId,
-    before_data: Object.fromEntries(Object.keys(changed).map((key) => [key, previous[key]])),
-    after_data: changed,
-  });
+
+  if (Object.keys(changed).length) {
+    await admin.from("audit_logs").insert({
+      tenant_id: input.tenantId,
+      actor_user_id: input.userId,
+      action: "captain.updated",
+      module: "captains",
+      operation_context: "dashboard",
+      entity_type: "captain",
+      entity_id: input.captainId,
+      before_data: Object.fromEntries(Object.keys(changed).map((key) => [key, previous[key]])),
+      after_data: changed,
+    });
+  }
 }
 
 export async function setCaptainPhoto(input: {
@@ -109,7 +162,7 @@ export async function setCaptainPhoto(input: {
   userId: string;
   captainId: string;
   file: File;
-}): Promise<string> {
+}): Promise<void> {
   const admin = createAdminClient();
 
   const { data: captain, error: readErr } = await admin
@@ -145,6 +198,82 @@ export async function setCaptainPhoto(input: {
     entity_id: input.captainId,
     after_data: { photo_path: path },
   });
+}
 
-  return path;
+export async function addCaptainDocument(input: {
+  tenantId: string;
+  userId: string;
+  captainId: string;
+  kind: DocumentKind;
+  title: string | null;
+  file: File;
+}): Promise<void> {
+  const admin = createAdminClient();
+
+  const { data: captain, error: readErr } = await admin
+    .from("captains")
+    .select("id")
+    .eq("id", input.captainId)
+    .eq("tenant_id", input.tenantId)
+    .maybeSingle();
+  if (readErr) throw readErr;
+  if (!captain) throw new Error("الكابتن غير موجود");
+
+  const safeName = input.file.name.replace(/[^\w.\-؀-ۿ]+/g, "_");
+  const path = `${input.tenantId}/${input.captainId}/${Date.now()}-${safeName}`;
+
+  const upload = await admin.storage
+    .from(DOCUMENT_BUCKET)
+    .upload(path, await input.file.arrayBuffer(), { contentType: input.file.type, upsert: false });
+  if (upload.error) throw new Error(`تعذّر رفع الملف: ${upload.error.message}`);
+
+  const { error } = await admin.from("captain_documents").insert({
+    tenant_id: input.tenantId,
+    captain_id: input.captainId,
+    kind: input.kind,
+    title: clean(input.title),
+    storage_path: path,
+    original_filename: input.file.name,
+    mime_type: input.file.type,
+    size_bytes: input.file.size,
+    uploaded_by: input.userId,
+  });
+  if (error) {
+    await admin.storage.from(DOCUMENT_BUCKET).remove([path]);
+    throw new Error(`تعذّر حفظ الملف: ${error.message}`);
+  }
+}
+
+export async function deleteCaptainDocument(input: {
+  tenantId: string;
+  userId: string;
+  documentId: string;
+}): Promise<string> {
+  const admin = createAdminClient();
+
+  const { data: doc, error: readErr } = await admin
+    .from("captain_documents")
+    .select("id, captain_id, storage_path, kind, original_filename")
+    .eq("id", input.documentId)
+    .eq("tenant_id", input.tenantId)
+    .maybeSingle();
+  if (readErr) throw readErr;
+  if (!doc) throw new Error("الملف غير موجود");
+
+  const { error } = await admin.from("captain_documents").delete().eq("id", doc.id);
+  if (error) throw new Error(`تعذّر الحذف: ${error.message}`);
+  await admin.storage.from(DOCUMENT_BUCKET).remove([doc.storage_path]);
+
+  await admin.from("audit_logs").insert({
+    tenant_id: input.tenantId,
+    actor_user_id: input.userId,
+    action: "captain.document_deleted",
+    module: "captains",
+    operation_context: "dashboard",
+    entity_type: "captain",
+    entity_id: doc.captain_id,
+    before_data: { kind: doc.kind, original_filename: doc.original_filename },
+  });
+
+  return doc.captain_id;
 }

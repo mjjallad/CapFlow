@@ -1,6 +1,6 @@
 import { requireTenant } from "@/lib/auth/context";
 import { createClient } from "@/lib/supabase/server";
-import { VEHICLE_LABELS, type VehicleType } from "@/components/vehicle";
+import { VEHICLE_LABELS, type VehicleKind } from "@/components/vehicle";
 
 export default async function TeamPage() {
   await requireTenant("captains.read");
@@ -9,10 +9,10 @@ export default async function TeamPage() {
   const { data: teams } = await supabase.from("teams").select("id, name").eq("is_active", true).order("name");
   const { data: captains } = await supabase
     .from("captains")
-    .select("team_id, vehicle_type, status")
+    .select("team_id, vehicle_kinds, status")
     .is("archived_at", null);
 
-  type Tally = { total: number; active: number; vehicles: Map<VehicleType, number> };
+  type Tally = { total: number; active: number; vehicles: Map<VehicleKind, number> };
   const tally = new Map<string, Tally>();
   let unassigned = 0;
   for (const c of captains ?? []) {
@@ -23,7 +23,7 @@ export default async function TeamPage() {
     const t = tally.get(c.team_id) ?? { total: 0, active: 0, vehicles: new Map() };
     t.total += 1;
     if (c.status === "active") t.active += 1;
-    if (c.vehicle_type) t.vehicles.set(c.vehicle_type, (t.vehicles.get(c.vehicle_type) ?? 0) + 1);
+    for (const kind of c.vehicle_kinds ?? []) t.vehicles.set(kind, (t.vehicles.get(kind) ?? 0) + 1);
     tally.set(c.team_id, t);
   }
 

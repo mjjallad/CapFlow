@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { saveCaptain, type SaveState } from "./actions";
-import { VEHICLE_LABELS } from "@/components/vehicle";
+import { VEHICLE_LABELS, VEHICLE_ORDER, type VehicleKind } from "@/components/vehicle";
 
 type Option = { id: string; name: string };
+type Identifier = { label: string; value: string };
 
 export type CaptainFields = {
   id: string;
@@ -12,17 +13,23 @@ export type CaptainFields = {
   phone: string | null;
   external_user_id: string | null;
   national_id: string | null;
+  identifiers: Identifier[];
   team_id: string | null;
-  vehicle_type: keyof typeof VEHICLE_LABELS | null;
+  vehicle_kinds: VehicleKind[];
   whatsapp_group: string | null;
   service_center_name: string | null;
   city_id: string | null;
   status: "active" | "inactive" | "suspended";
   deduction_rate: number;
+  contract_file_number: string | null;
+  activated_on: string | null;
   notes: string | null;
 };
 
 const STATUS_LABELS = { active: "نشط", inactive: "غير نشط", suspended: "موقوف" };
+
+const inputClass =
+  "w-full rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent disabled:opacity-70";
 
 export function CaptainEditForm({
   captain,
@@ -36,10 +43,15 @@ export function CaptainEditForm({
   readOnly: boolean;
 }) {
   const [state, action, pending] = useActionState<SaveState, FormData>(saveCaptain, {});
+  const [identifiers, setIdentifiers] = useState<Identifier[]>(captain.identifiers);
+
+  const updateIdentifier = (index: number, patch: Partial<Identifier>) =>
+    setIdentifiers((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
 
   return (
     <form action={action} className="flex flex-col gap-5">
       <input type="hidden" name="captainId" value={captain.id} />
+      <input type="hidden" name="identifiers" value={JSON.stringify(identifiers)} />
 
       <Section title="البيانات الشخصية">
         <Field label="الاسم الكامل">
@@ -54,6 +66,52 @@ export function CaptainEditForm({
         <Field label="معرّف المنصة (UserID)">
           <input name="external_user_id" defaultValue={captain.external_user_id ?? ""} disabled={readOnly} className={inputClass} dir="ltr" />
         </Field>
+
+        <div className="sm:col-span-2">
+          <div className="mb-1.5 text-sm font-medium">أرقام معرّفات أخرى</div>
+          <div className="flex flex-col gap-2">
+            {identifiers.map((row, index) => (
+              <div key={index} className="flex gap-2">
+                <input
+                  value={row.label}
+                  onChange={(e) => updateIdentifier(index, { label: e.target.value })}
+                  placeholder="نوع الرقم"
+                  disabled={readOnly}
+                  className={`${inputClass} sm:w-48`}
+                  dir="auto"
+                />
+                <input
+                  value={row.value}
+                  onChange={(e) => updateIdentifier(index, { value: e.target.value })}
+                  placeholder="الرقم"
+                  disabled={readOnly}
+                  className={inputClass}
+                  dir="ltr"
+                />
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => setIdentifiers((rows) => rows.filter((_, i) => i !== index))}
+                    className="rounded-md border border-border px-3 text-sm text-muted hover:text-danger"
+                    aria-label="حذف الرقم"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => setIdentifiers((rows) => [...rows, { label: "", value: "" }])}
+                className="self-start rounded-md border border-border px-3 py-1.5 text-sm hover:bg-background"
+              >
+                + إضافة رقم
+              </button>
+            )}
+            {identifiers.length === 0 && readOnly && <span className="text-sm text-muted">—</span>}
+          </div>
+        </div>
       </Section>
 
       <Section title="العمل">
@@ -63,16 +121,6 @@ export function CaptainEditForm({
             {teams.map((t) => (
               <option key={t.id} value={t.id}>
                 فريق {t.name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="المركبة">
-          <select name="vehicle_type" defaultValue={captain.vehicle_type ?? ""} disabled={readOnly} className={inputClass}>
-            <option value="">مركبته الخاصة</option>
-            {Object.entries(VEHICLE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
               </option>
             ))}
           </select>
@@ -87,6 +135,26 @@ export function CaptainEditForm({
             ))}
           </select>
         </Field>
+
+        <div className="sm:col-span-2">
+          <div className="mb-1.5 text-sm font-medium">المركبات</div>
+          <div className="flex flex-wrap gap-4">
+            {VEHICLE_ORDER.map((kind) => (
+              <label key={kind} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="vehicle_kinds"
+                  value={kind}
+                  defaultChecked={captain.vehicle_kinds.includes(kind)}
+                  disabled={readOnly}
+                />
+                {VEHICLE_LABELS[kind]}
+              </label>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-muted">اختر أكثر من واحدة إذا كان يعمل على أكثر من مركبة.</p>
+        </div>
+
         <Field label="الحالة">
           <select name="status" defaultValue={captain.status} disabled={readOnly} className={inputClass}>
             {Object.entries(STATUS_LABELS).map(([value, label]) => (
@@ -96,11 +164,24 @@ export function CaptainEditForm({
             ))}
           </select>
         </Field>
+        <Field label="تاريخ التفعيل">
+          <input
+            name="activated_on"
+            type="date"
+            defaultValue={captain.activated_on ?? ""}
+            disabled={readOnly}
+            className={inputClass}
+            dir="ltr"
+          />
+        </Field>
         <Field label="مجموعة واتساب">
           <input name="whatsapp_group" defaultValue={captain.whatsapp_group ?? ""} disabled={readOnly} className={inputClass} dir="auto" />
         </Field>
         <Field label="مركز الخدمة">
           <input name="service_center_name" defaultValue={captain.service_center_name ?? ""} disabled={readOnly} className={inputClass} dir="auto" />
+        </Field>
+        <Field label="رقم ملف العقد" hint="رقم الملف الورقي الذي يُحفظ فيه العقد.">
+          <input name="contract_file_number" defaultValue={captain.contract_file_number ?? ""} disabled={readOnly} className={inputClass} dir="ltr" />
         </Field>
         <Field label="خصم لكل أوردر (دينار)" hint="0 = لا خصم. المتوقع إيداعه = المطلوب − الخصم × الأوردرات.">
           <input
@@ -149,9 +230,6 @@ export function CaptainEditForm({
     </form>
   );
 }
-
-const inputClass =
-  "w-full rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent disabled:opacity-70";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

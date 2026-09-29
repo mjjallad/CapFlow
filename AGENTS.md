@@ -44,15 +44,17 @@ business row carries `tenant_id` and is protected by RLS.
 - Phones are canonical E.164 (`+9627XXXXXXXX`) via `src/lib/phone.ts` everywhere.
 - Permissions: `src/lib/auth/permissions.ts` (`can(role, permission)`); pages call
   `requireTenant(permission)` from `src/lib/auth/context.ts`.
-- Captains belong to a team: **A**, **B** or **FDK**. A and B ride their own vehicles;
-  FDK captains ride company vehicles, split by `captains.vehicle_type`
-  (`company_car` / `company_scooter`). The day board and the captains list group by team.
+- Captains belong to a team: **A**, **B** or **FDK**. `captains.vehicle_kinds` is a set
+  (`own_car`, `own_scooter`, `company_car`, `company_scooter`) because a captain may ride
+  more than one. The day board and the captains list group by team.
 - `captains.phone` may be NULL when the number belongs to someone else; such rows carry
   `needs_review`.
 - `/captains/[captainId]` is the captain's profile: identity, team, WhatsApp group, photo
-  and free notes, all editable under `captains.manage`. Photos live in the private
-  `captain-photos` bucket and are shown through short-lived signed URLs (`next/image`
-  with `unoptimized`). Every edit writes an `audit_logs` row with only the changed fields.
+  free identifier rows (`captains.identifiers` jsonb), contract file number, activation
+  date, photo and notes — all editable under `captains.manage`. Scanned papers live in
+  `captain_documents` + the private `captain-documents` bucket. Both buckets are private
+  and shown through short-lived signed URLs (`next/image` with `unoptimized`). Every edit
+  writes an `audit_logs` row with only the changed fields.
 - `deposit_cases` has two foreign keys to `operating_days`, so embeds must name the
   constraint: `operating_days!deposit_cases_operating_day_id_fkey(...)`.
 - `public.current_business_date(tenant)` mirrors Diken's `current_work_date()`: before

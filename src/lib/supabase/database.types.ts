@@ -212,16 +212,83 @@ export type Database = {
           },
         ]
       }
+      captain_documents: {
+        Row: {
+          captain_id: string
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["captain_document_kind"]
+          mime_type: string
+          original_filename: string | null
+          size_bytes: number | null
+          storage_path: string
+          tenant_id: string
+          title: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          captain_id: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["captain_document_kind"]
+          mime_type: string
+          original_filename?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          tenant_id: string
+          title?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          captain_id?: string
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["captain_document_kind"]
+          mime_type?: string
+          original_filename?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          tenant_id?: string
+          title?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "captain_documents_captain_id_fkey"
+            columns: ["captain_id"]
+            isOneToOne: false
+            referencedRelation: "captains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "captain_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "captain_documents_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       captains: {
         Row: {
+          activated_on: string | null
           archived_at: string | null
           city_id: string | null
+          contract_file_number: string | null
           created_at: string
           deduction_rate: number
           external_user_id: string | null
           full_name: string
           group_label: string | null
           id: string
+          identifiers: Json
           metadata: Json
           national_id: string | null
           needs_review: boolean
@@ -236,18 +303,21 @@ export type Database = {
           team_leader_name: string | null
           tenant_id: string
           updated_at: string
-          vehicle_type: Database["public"]["Enums"]["vehicle_type"] | null
+          vehicle_kinds: Database["public"]["Enums"]["vehicle_kind"][]
           whatsapp_group: string | null
         }
         Insert: {
+          activated_on?: string | null
           archived_at?: string | null
           city_id?: string | null
+          contract_file_number?: string | null
           created_at?: string
           deduction_rate?: number
           external_user_id?: string | null
           full_name: string
           group_label?: string | null
           id?: string
+          identifiers?: Json
           metadata?: Json
           national_id?: string | null
           needs_review?: boolean
@@ -262,18 +332,21 @@ export type Database = {
           team_leader_name?: string | null
           tenant_id: string
           updated_at?: string
-          vehicle_type?: Database["public"]["Enums"]["vehicle_type"] | null
+          vehicle_kinds?: Database["public"]["Enums"]["vehicle_kind"][]
           whatsapp_group?: string | null
         }
         Update: {
+          activated_on?: string | null
           archived_at?: string | null
           city_id?: string | null
+          contract_file_number?: string | null
           created_at?: string
           deduction_rate?: number
           external_user_id?: string | null
           full_name?: string
           group_label?: string | null
           id?: string
+          identifiers?: Json
           metadata?: Json
           national_id?: string | null
           needs_review?: boolean
@@ -288,7 +361,7 @@ export type Database = {
           team_leader_name?: string | null
           tenant_id?: string
           updated_at?: string
-          vehicle_type?: Database["public"]["Enums"]["vehicle_type"] | null
+          vehicle_kinds?: Database["public"]["Enums"]["vehicle_kind"][]
           whatsapp_group?: string | null
         }
         Relationships: [
@@ -1451,6 +1524,12 @@ export type Database = {
         | "reviews"
         | "reports"
         | "integrations"
+      captain_document_kind:
+        | "contract"
+        | "national_id"
+        | "license"
+        | "vehicle"
+        | "other"
       captain_status: "active" | "inactive" | "suspended"
       deposit_status:
         | "awaiting_sijil"
@@ -1507,7 +1586,11 @@ export type Database = {
         | "deposit_evidence"
         | "captain"
         | "import_batch"
-      vehicle_type: "company_car" | "company_scooter"
+      vehicle_kind:
+        | "own_car"
+        | "own_scooter"
+        | "company_car"
+        | "company_scooter"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1655,6 +1738,13 @@ export const Constants = {
         "reports",
         "integrations",
       ],
+      captain_document_kind: [
+        "contract",
+        "national_id",
+        "license",
+        "vehicle",
+        "other",
+      ],
       captain_status: ["active", "inactive", "suspended"],
       deposit_status: [
         "awaiting_sijil",
@@ -1718,7 +1808,12 @@ export const Constants = {
         "captain",
         "import_batch",
       ],
-      vehicle_type: ["company_car", "company_scooter"],
+      vehicle_kind: [
+        "own_car",
+        "own_scooter",
+        "company_car",
+        "company_scooter",
+      ],
     },
   },
 } as const

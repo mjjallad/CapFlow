@@ -7,7 +7,7 @@ import { DepositStatusBadge, type DepositStatus } from "@/components/deposit-sta
 import { formatDateTime, formatMoney, weekdayArabic } from "@/lib/dates";
 import { DepositForm } from "./deposit-form";
 import { NoteForm } from "./note-form";
-import { VEHICLE_LABELS } from "@/components/vehicle";
+import { vehicleSummary } from "@/components/vehicle";
 
 const PAGE_SIZE = 200;
 
@@ -54,7 +54,7 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
   let request = supabase
     .from("deposit_cases")
     .select(
-      "id, status, collected_amount, expected_amount, deposited_amount, withdrawn_amount, allowed_deduction, deduction_rate, completed_deliveries, payment_method, is_late, deposited_at, review_reason, notes, supervisor_note, captain:captains!inner(id, external_user_id, full_name, phone, vehicle_type, team:teams(name))",
+      "id, status, collected_amount, expected_amount, deposited_amount, withdrawn_amount, allowed_deduction, deduction_rate, completed_deliveries, payment_method, is_late, deposited_at, review_reason, notes, supervisor_note, captain:captains!inner(id, external_user_id, full_name, phone, vehicle_kinds, team:teams(name))",
       { count: "exact" },
     )
     .eq("operating_day_id", day.operating_day_id!)
@@ -182,7 +182,7 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
                     </div>
                     <div className="text-xs text-muted" dir="auto">
                       فريق {c.captain.team?.name ?? "—"}
-                      {c.captain.vehicle_type ? ` · ${VEHICLE_LABELS[c.captain.vehicle_type]}` : ""}
+                      {c.captain.vehicle_kinds?.length ? ` · ${vehicleSummary(c.captain.vehicle_kinds)}` : ""}
                     </div>
                   </td>
                   <td className="px-3 py-2">

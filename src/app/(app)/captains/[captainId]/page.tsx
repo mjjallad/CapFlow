@@ -4,34 +4,37 @@ import { notFound } from "next/navigation";
 import { requireTenant } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { photoUrl } from "@/lib/captains/service";
+import { listDocuments, photoUrl, type Identifier } from "@/lib/captains/service";
 import { DepositStatusBadge } from "@/components/deposit-status";
 import { formatMoney, weekdayArabic } from "@/lib/dates";
 import { CaptainEditForm, type CaptainFields } from "./edit-form";
 import { PhotoForm } from "./photo-form";
+import { CaptainDocuments } from "./documents";
+import { vehicleSummary } from "@/components/vehicle";
 
 const RECENT_DAYS = 14;
 
 export default async function CaptainPage({ params }: PageProps<"/captains/[captainId]">) {
   const { captainId } = await params;
   const ctx = await requireTenant("captains.read");
-  const currency = ctx.membership.tenant.currency_code;
+  const { currency_code: currency, timezone: tz } = ctx.membership.tenant;
   const canManage = can(ctx.membership.role, "captains.manage");
   const supabase = await createClient();
 
   const { data: captain } = await supabase
     .from("captains")
     .select(
-      "id, full_name, phone, external_user_id, national_id, team_id, vehicle_type, whatsapp_group, service_center_name, city_id, status, deduction_rate, notes, photo_path, needs_review, review_note, team:teams(name), city:cities(name)",
+      "id, full_name, phone, external_user_id, national_id, identifiers, team_id, vehicle_kinds, whatsapp_group, service_center_name, city_id, status, deduction_rate, contract_file_number, activated_on, notes, photo_path, needs_review, review_note, team:teams(name), city:cities(name)",
     )
     .eq("id", captainId)
     .maybeSingle();
   if (!captain) notFound();
 
-  const [{ data: teams }, { data: cities }, photo, { data: cases }] = await Promise.all([
+  const [{ data: teams }, { data: cities }, photo, documents, { data: cases }] = await Promise.all([
     supabase.from("teams").select("id, name").eq("is_active", true).order("name"),
     supabase.from("cities").select("id, name").eq("is_active", true).order("name"),
     photoUrl(captain.photo_path),
+    listDocuments({ tenantId: ctx.tenantId, captainId }),
     supabase
       .from("deposit_cases")
       .select("id, status, collected_amount, expected_amount, deposited_amount, withdrawn_amount, day:operating_days!deposit_cases_operating_day_id_fkey(business_date)")
@@ -46,13 +49,16 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
     phone: captain.phone,
     external_user_id: captain.external_user_id,
     national_id: captain.national_id,
+    identifiers: (captain.identifiers ?? []) as unknown as Identifier[],
     team_id: captain.team_id,
-    vehicle_type: captain.vehicle_type,
+    vehicle_kinds: captain.vehicle_kinds ?? [],
     whatsapp_group: captain.whatsapp_group,
     service_center_name: captain.service_center_name,
     city_id: captain.city_id,
     status: captain.status,
     deduction_rate: captain.deduction_rate,
+    contract_file_number: captain.contract_file_number,
+    activated_on: captain.activated_on,
     notes: captain.notes,
   };
 
@@ -94,6 +100,12 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
             <Row label="الفريق" value={captain.team?.name ? `فريق ${captain.team.name}` : null} />
             <Row label="مجموعة واتساب" value={captain.whatsapp_group} />
             <Row label="المدينة" value={captain.city?.name ?? null} />
+            <Row label="المركبات" value={vehicleSummary(captain.vehicle_kinds)} />
+            <Row label="تاريخ التفعيل" value={captain.activated_on} ltr />
+            <Row label="رقم ملف العقد" value={captain.contract_file_number} ltr />
+            {((captain.identifiers ?? []) as unknown as Identifier[]).map((id, i) => (
+              <Row key={i} label={id.label || "معرّف"} value={id.value} ltr />
+            ))}
           </dl>
           {captain.needs_review && (
             <p className="mt-3 rounded-md bg-amber-100 px-3 py-2 text-sm text-amber-900 dark:bg-amber-900/40 dark:text-amber-200">
@@ -104,6 +116,8 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
       </div>
 
       <CaptainEditForm captain={fields} teams={teams ?? []} cities={cities ?? []} readOnly={!canManage} />
+
+      <CaptainDocuments captainId={captain.id} documents={documents} readOnly={!canManage} timeZone={tz} />
 
       <section>
         <h2 className="mb-2 font-medium">آخر الأيام</h2>

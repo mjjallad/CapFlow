@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireTenant } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { VEHICLE_LABELS } from "@/components/vehicle";
+import { vehicleSummary } from "@/components/vehicle";
 
 const STATUS_LABELS = { active: "نشط", inactive: "غير نشط", suspended: "موقوف" } as const;
 const PAGE_SIZE = 100;
@@ -21,7 +21,7 @@ export default async function CaptainsPage({ searchParams }: PageProps<"/captain
   let request = supabase
     .from("captains")
     .select(
-      "id, external_user_id, full_name, phone, status, needs_review, vehicle_type, city:cities(name), team:teams(name)",
+      "id, external_user_id, full_name, phone, status, needs_review, vehicle_kinds, city:cities(name), team:teams(name)",
       { count: "exact" },
     )
     .is("archived_at", null)
@@ -107,7 +107,7 @@ export default async function CaptainsPage({ searchParams }: PageProps<"/captain
                   </td>
                   <td className="px-3 py-2 tabular-nums" dir="ltr">{c.phone}</td>
                   <td className="px-3 py-2" dir="auto">{c.city?.name ?? "—"}</td>
-                  <td className="px-3 py-2" dir="auto">{c.vehicle_type ? VEHICLE_LABELS[c.vehicle_type] : "—"}</td>
+                  <td className="px-3 py-2" dir="auto">{vehicleSummary(c.vehicle_kinds)}</td>
                   <td className="px-3 py-2" dir="auto">{c.team?.name ?? "—"}</td>
                   <td className="px-3 py-2">
                     {STATUS_LABELS[c.status]}
