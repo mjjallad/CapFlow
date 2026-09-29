@@ -10,6 +10,8 @@ import { formatMoney, weekdayArabic } from "@/lib/dates";
 import { CaptainEditForm, type CaptainFields } from "./edit-form";
 import { PhotoForm } from "./photo-form";
 import { CaptainDocuments } from "./documents";
+import { CaptainVehicles } from "./vehicles";
+import { listVehicles } from "@/lib/captains/vehicles";
 import { vehicleSummary } from "@/components/vehicle";
 
 const RECENT_DAYS = 14;
@@ -30,11 +32,12 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
     .maybeSingle();
   if (!captain) notFound();
 
-  const [{ data: teams }, { data: cities }, photo, documents, { data: cases }] = await Promise.all([
+  const [{ data: teams }, { data: cities }, photo, documents, vehicles, { data: cases }] = await Promise.all([
     supabase.from("teams").select("id, name").eq("is_active", true).order("name"),
     supabase.from("cities").select("id, name").eq("is_active", true).order("name"),
     photoUrl(captain.photo_path),
     listDocuments({ tenantId: ctx.tenantId, captainId }),
+    listVehicles({ tenantId: ctx.tenantId, captainId }),
     supabase
       .from("deposit_cases")
       .select("id, status, collected_amount, expected_amount, deposited_amount, withdrawn_amount, day:operating_days!deposit_cases_operating_day_id_fkey(business_date)")
@@ -95,7 +98,7 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
           </h1>
           <dl className="mt-3 grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
             <Row label="الهاتف" value={captain.phone} ltr />
-            <Row label="هاتف ثانٍ" value={captain.phone_secondary} ltr />
+            <Row label="هاتف ثاني" value={captain.phone_secondary} ltr />
             <Row label="معرّف المنصة" value={captain.external_user_id} ltr />
             <Row label="الرقم الوطني" value={captain.national_id} ltr />
             <Row label="الفريق" value={captain.team?.name ? `فريق ${captain.team.name}` : null} />
@@ -122,6 +125,10 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
       </div>
 
       <CaptainEditForm captain={fields} teams={teams ?? []} cities={cities ?? []} readOnly={!canManage} />
+
+      {(captain.vehicle_kinds ?? []).some((k) => k === "company_car" || k === "company_scooter") && (
+        <CaptainVehicles captainId={captain.id} vehicles={vehicles} readOnly={!canManage} />
+      )}
 
       <CaptainDocuments captainId={captain.id} documents={documents} readOnly={!canManage} timeZone={tz} />
 

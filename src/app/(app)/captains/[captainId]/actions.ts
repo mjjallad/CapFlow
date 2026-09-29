@@ -9,6 +9,7 @@ import {
   updateCaptain,
   type Referrer,
 } from "@/lib/captains/service";
+import { deleteVehicle, saveVehicle } from "@/lib/captains/vehicles";
 import type { Database } from "@/lib/supabase/database.types";
 
 type CaptainStatus = Database["public"]["Enums"]["captain_status"];
@@ -156,5 +157,74 @@ export async function removeCaptainDocument(_prev: DocumentState, formData: Form
     return { saved: true };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "تعذّر حذف الملف." };
+  }
+}
+
+export type VehicleState = { error?: string; saved?: boolean };
+
+const COMPANY_KINDS: VehicleKind[] = ["company_car", "company_scooter"];
+
+export async function saveVehicleAction(_prev: VehicleState, formData: FormData): Promise<VehicleState> {
+  const ctx = await requireTenant("captains.manage");
+  const captainId = String(formData.get("captainId") ?? "");
+  if (!captainId) return { error: "الكابتن مفقود." };
+
+  const text = (key: string) => {
+    const value = String(formData.get(key) ?? "").trim();
+    return value === "" ? null : value;
+  };
+  const number = (key: string) => {
+    const raw = text(key);
+    if (raw === null) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? Math.trunc(n) : NaN;
+  };
+
+  const kindRaw = String(formData.get("kind") ?? "");
+  const kind = COMPANY_KINDS.includes(kindRaw as VehicleKind) ? (kindRaw as VehicleKind) : "company_car";
+  const madeYear = number("made_year");
+  const odometer = number("odometer_km");
+  const receivedOn = text("received_on");
+
+  if (Number.isNaN(madeYear) || (madeYear !== null && (madeYear < 1950 || madeYear > 2100)))
+    return { error: "سنة الصنع غير صالحة." };
+  if (Number.isNaN(odometer) || (odometer !== null && odometer < 0)) return { error: "عداد المشي غير صالح." };
+  if (receivedOn && !/^\d{4}-\d{2}-\d{2}$/.test(receivedOn)) return { error: "تاريخ الاستلام غير صالح." };
+
+  try {
+    await saveVehicle({
+      tenantId: ctx.tenantId,
+      userId: ctx.userId,
+      captainId,
+      vehicle: {
+        id: text("vehicleId"),
+        kind,
+        model: text("model"),
+        plate_number: text("plate_number"),
+        made_year: madeYear,
+        color: text("color"),
+        odometer_km: odometer,
+        received_on: receivedOn,
+        notes: text("notes"),
+      },
+    });
+    revalidatePath(`/captains/${captainId}`);
+    return { saved: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "تعذّر حفظ المركبة." };
+  }
+}
+
+export async function removeVehicle(_prev: VehicleState, formData: FormData): Promise<VehicleState> {
+  const ctx = await requireTenant("captains.manage");
+  const vehicleId = String(formData.get("vehicleId") ?? "");
+  if (!vehicleId) return { error: "المركبة مفقودة." };
+
+  try {
+    const captainId = await deleteVehicle({ tenantId: ctx.tenantId, userId: ctx.userId, vehicleId });
+    if (captainId) revalidatePath(`/captains/${captainId}`);
+    return { saved: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "تعذّر حذف المركبة." };
   }
 }

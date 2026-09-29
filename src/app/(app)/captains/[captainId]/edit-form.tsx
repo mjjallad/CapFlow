@@ -60,7 +60,7 @@ export function CaptainEditForm({
         <Field label="رقم الهاتف">
           <input name="phone" defaultValue={captain.phone ?? ""} disabled={readOnly} className={inputClass} dir="ltr" placeholder="+9627…" />
         </Field>
-        <Field label="رقم هاتف ثانٍ">
+        <Field label="رقم هاتف ثاني">
           <input
             name="phone_secondary"
             defaultValue={captain.phone_secondary ?? ""}

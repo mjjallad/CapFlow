@@ -53,7 +53,9 @@ business row carries `tenant_id` and is protected by RLS.
   two phone numbers, the referrers who vouched for them (`captains.referrers` jsonb:
   name + national id + phone), contract file number, activation date, photo and notes —
   all editable under `captains.manage`. Scanned papers live in
-  `captain_documents` + the private `captain-documents` bucket. Both buckets are private
+  `captain_documents` + the private `captain-documents` bucket. Company cars and
+  scooters are rows in `vehicles` (model, plate, year, colour, odometer, handover date,
+  notes) and the section only appears once the captain has a `company_*` vehicle kind. Both buckets are private
   and shown through short-lived signed URLs (`next/image` with `unoptimized`). Every edit
   writes an `audit_logs` row with only the changed fields.
 - `deposit_cases` has two foreign keys to `operating_days`, so embeds must name the

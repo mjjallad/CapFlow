@@ -1410,6 +1410,69 @@ export type Database = {
         }
         Relationships: []
       }
+      vehicles: {
+        Row: {
+          captain_id: string | null
+          color: string | null
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["vehicle_kind"]
+          made_year: number | null
+          model: string | null
+          notes: string | null
+          odometer_km: number | null
+          plate_number: string | null
+          received_on: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          captain_id?: string | null
+          color?: string | null
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["vehicle_kind"]
+          made_year?: number | null
+          model?: string | null
+          notes?: string | null
+          odometer_km?: number | null
+          plate_number?: string | null
+          received_on?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          captain_id?: string | null
+          color?: string | null
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["vehicle_kind"]
+          made_year?: number | null
+          model?: string | null
+          notes?: string | null
+          odometer_km?: number | null
+          plate_number?: string | null
+          received_on?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicles_captain_id_fkey"
+            columns: ["captain_id"]
+            isOneToOne: false
+            referencedRelation: "captains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       day_team_summaries: {
