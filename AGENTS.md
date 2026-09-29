@@ -47,8 +47,6 @@ business row carries `tenant_id` and is protected by RLS.
 - Captains belong to a team: **A**, **B** or **FDK**. A and B ride their own vehicles;
   FDK captains ride company vehicles, split by `captains.vehicle_type`
   (`company_car` / `company_scooter`). The day board and the captains list group by team.
-- The 13 `supervisors` rows imported from Diken are **history only** — that layer no
-  longer exists in the business. Do not build new features on it.
 - `captains.phone` may be NULL when the number belongs to someone else; such rows carry
   `needs_review`.
 - `public.current_business_date(tenant)` mirrors Diken's `current_work_date()`: before

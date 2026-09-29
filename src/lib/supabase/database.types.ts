@@ -229,7 +229,6 @@ export type Database = {
           service_center_name: string | null
           source_sheet: string | null
           status: Database["public"]["Enums"]["captain_status"]
-          supervisor_id: string | null
           team_id: string | null
           team_leader_name: string | null
           tenant_id: string
@@ -252,7 +251,6 @@ export type Database = {
           service_center_name?: string | null
           source_sheet?: string | null
           status?: Database["public"]["Enums"]["captain_status"]
-          supervisor_id?: string | null
           team_id?: string | null
           team_leader_name?: string | null
           tenant_id: string
@@ -275,7 +273,6 @@ export type Database = {
           service_center_name?: string | null
           source_sheet?: string | null
           status?: Database["public"]["Enums"]["captain_status"]
-          supervisor_id?: string | null
           team_id?: string | null
           team_leader_name?: string | null
           tenant_id?: string
@@ -288,20 +285,6 @@ export type Database = {
             columns: ["city_id"]
             isOneToOne: false
             referencedRelation: "cities"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "captains_supervisor_id_fkey"
-            columns: ["supervisor_id"]
-            isOneToOne: false
-            referencedRelation: "day_supervisor_summaries"
-            referencedColumns: ["supervisor_id"]
-          },
-          {
-            foreignKeyName: "captains_supervisor_id_fkey"
-            columns: ["supervisor_id"]
-            isOneToOne: false
-            referencedRelation: "supervisors"
             referencedColumns: ["id"]
           },
           {
@@ -1188,71 +1171,6 @@ export type Database = {
           },
         ]
       }
-      supervisors: {
-        Row: {
-          code: string
-          created_at: string
-          id: string
-          is_active: boolean
-          membership_id: string | null
-          name: string
-          team_id: string | null
-          tenant_id: string
-          updated_at: string
-        }
-        Insert: {
-          code: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          membership_id?: string | null
-          name: string
-          team_id?: string | null
-          tenant_id: string
-          updated_at?: string
-        }
-        Update: {
-          code?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          membership_id?: string | null
-          name?: string
-          team_id?: string | null
-          tenant_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "supervisors_membership_id_fkey"
-            columns: ["membership_id"]
-            isOneToOne: false
-            referencedRelation: "tenant_memberships"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supervisors_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "day_team_summaries"
-            referencedColumns: ["team_id"]
-          },
-          {
-            foreignKeyName: "supervisors_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "supervisors_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       teams: {
         Row: {
           city_id: string | null
@@ -1409,44 +1327,6 @@ export type Database = {
       }
     }
     Views: {
-      day_supervisor_summaries: {
-        Row: {
-          awaiting: number | null
-          cases: number | null
-          collected_total: number | null
-          deposited_total: number | null
-          operating_day_id: string | null
-          overdue: number | null
-          review: number | null
-          supervisor_code: string | null
-          supervisor_id: string | null
-          supervisor_name: string | null
-          tenant_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "deposit_cases_operating_day_id_fkey"
-            columns: ["operating_day_id"]
-            isOneToOne: false
-            referencedRelation: "operating_day_summaries"
-            referencedColumns: ["operating_day_id"]
-          },
-          {
-            foreignKeyName: "deposit_cases_operating_day_id_fkey"
-            columns: ["operating_day_id"]
-            isOneToOne: false
-            referencedRelation: "operating_days"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "deposit_cases_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       day_team_summaries: {
         Row: {
           awaiting: number | null
