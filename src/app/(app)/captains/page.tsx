@@ -8,20 +8,30 @@ const PAGE_SIZE = 100;
 
 export default async function CaptainsPage({ searchParams }: PageProps<"/captains">) {
   const ctx = await requireTenant("captains.read");
-  const { q, page } = await searchParams;
+  const { q, page, supervisor } = await searchParams;
   const query = typeof q === "string" ? q.trim() : "";
+  const supervisorCode = typeof supervisor === "string" ? supervisor : "";
   const pageNumber = Math.max(1, Number(typeof page === "string" ? page : 1) || 1);
   const supabase = await createClient();
 
+  const { data: supervisors } = await supabase
+    .from("supervisors")
+    .select("id, code, name")
+    .eq("is_active", true)
+    .order("code");
+  const selected = supervisors?.find((s) => s.code === supervisorCode);
+
   let request = supabase
     .from("captains")
-    .select("id, external_user_id, full_name, phone, status, service_center_name, city:cities(name), team:teams(name)", {
-      count: "exact",
-    })
+    .select(
+      "id, external_user_id, full_name, phone, status, needs_review, service_center_name, city:cities(name), team:teams(name), supervisor:supervisors(code, name)",
+      { count: "exact" },
+    )
     .is("archived_at", null)
     .order("full_name")
     .range((pageNumber - 1) * PAGE_SIZE, pageNumber * PAGE_SIZE - 1);
 
+  if (selected) request = request.eq("supervisor_id", selected.id);
   if (query) {
     request = request.or(`full_name.ilike.%${query}%,phone.ilike.%${query}%,external_user_id.ilike.%${query}%`);
   }
@@ -47,13 +57,25 @@ export default async function CaptainsPage({ searchParams }: PageProps<"/captain
         )}
       </div>
 
-      <form className="flex gap-2">
+      <form className="flex flex-wrap gap-2">
         <input
           name="q"
           defaultValue={query}
           placeholder="بحث بالاسم أو الهاتف أو UserID"
           className="w-full max-w-md rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
         />
+        <select
+          name="supervisor"
+          defaultValue={supervisorCode}
+          className="rounded-md border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+        >
+          <option value="">كل المشرفين</option>
+          {supervisors?.map((s) => (
+            <option key={s.id} value={s.code}>
+              {s.name} ({s.code})
+            </option>
+          ))}
+        </select>
         <button type="submit" className="rounded-md border border-border px-4 py-2 text-sm hover:bg-surface">
           بحث
         </button>
@@ -72,7 +94,7 @@ export default async function CaptainsPage({ searchParams }: PageProps<"/captain
                 <th className="px-3 py-2 text-start font-medium">الاسم</th>
                 <th className="px-3 py-2 text-start font-medium">الهاتف</th>
                 <th className="px-3 py-2 text-start font-medium">المدينة</th>
-                <th className="px-3 py-2 text-start font-medium">مركز الخدمة</th>
+                <th className="px-3 py-2 text-start font-medium">المشرف</th>
                 <th className="px-3 py-2 text-start font-medium">الفريق</th>
                 <th className="px-3 py-2 text-start font-medium">الحالة</th>
               </tr>
@@ -84,9 +106,12 @@ export default async function CaptainsPage({ searchParams }: PageProps<"/captain
                   <td className="px-3 py-2" dir="auto">{c.full_name}</td>
                   <td className="px-3 py-2 tabular-nums" dir="ltr">{c.phone}</td>
                   <td className="px-3 py-2" dir="auto">{c.city?.name ?? "—"}</td>
-                  <td className="px-3 py-2" dir="auto">{c.service_center_name ?? "—"}</td>
+                  <td className="px-3 py-2" dir="auto">{c.supervisor?.name ?? "—"}</td>
                   <td className="px-3 py-2" dir="auto">{c.team?.name ?? "—"}</td>
-                  <td className="px-3 py-2">{STATUS_LABELS[c.status]}</td>
+                  <td className="px-3 py-2">
+                    {STATUS_LABELS[c.status]}
+                    {c.needs_review && <div className="text-xs text-amber-700 dark:text-amber-300">بحاجة مراجعة</div>}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -97,7 +122,7 @@ export default async function CaptainsPage({ searchParams }: PageProps<"/captain
       {pageCount > 1 && (
         <nav className="flex items-center gap-3 text-sm">
           {pageNumber > 1 && (
-            <Link href={`/captains?q=${encodeURIComponent(query)}&page=${pageNumber - 1}`} className="hover:underline">
+            <Link href={`/captains?q=${encodeURIComponent(query)}&supervisor=${encodeURIComponent(supervisorCode)}&page=${pageNumber - 1}`} className="hover:underline">
               السابق
             </Link>
           )}
@@ -105,7 +130,7 @@ export default async function CaptainsPage({ searchParams }: PageProps<"/captain
             صفحة {pageNumber} من {pageCount}
           </span>
           {pageNumber < pageCount && (
-            <Link href={`/captains?q=${encodeURIComponent(query)}&page=${pageNumber + 1}`} className="hover:underline">
+            <Link href={`/captains?q=${encodeURIComponent(query)}&supervisor=${encodeURIComponent(supervisorCode)}&page=${pageNumber + 1}`} className="hover:underline">
               التالي
             </Link>
           )}

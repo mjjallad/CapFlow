@@ -112,14 +112,18 @@ export async function recordDeposit(input: {
   if (error) throw error;
   if (!found) throw new Error("الحالة غير موجودة");
 
-  const rpc = await admin.rpc("record_deposit", {
+  // The type generator marks every function argument as non-nullable, but
+  // record_deposit accepts NULL for the method, timestamp and note.
+  const args = {
     p_case_id: input.caseId,
     p_actor: input.userId,
     p_amount: input.amount,
     p_method: input.method,
     p_deposited_at: input.depositedAt,
     p_note: input.note,
-  });
+  } as unknown as Database["public"]["Functions"]["record_deposit"]["Args"];
+
+  const rpc = await admin.rpc("record_deposit", args);
   if (rpc.error) throw new Error(`فشل تسجيل الإيداع: ${rpc.error.message}`);
   return rpc.data as { status: Database["public"]["Enums"]["deposit_status"]; is_late: boolean };
 }

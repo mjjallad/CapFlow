@@ -126,6 +126,13 @@ export type Database = {
             foreignKeyName: "attendance_records_operating_day_id_fkey"
             columns: ["operating_day_id"]
             isOneToOne: false
+            referencedRelation: "operating_day_summaries"
+            referencedColumns: ["operating_day_id"]
+          },
+          {
+            foreignKeyName: "attendance_records_operating_day_id_fkey"
+            columns: ["operating_day_id"]
+            isOneToOne: false
             referencedRelation: "operating_days"
             referencedColumns: ["id"]
           },
@@ -216,9 +223,13 @@ export type Database = {
           group_label: string | null
           id: string
           metadata: Json
-          phone: string
+          needs_review: boolean
+          phone: string | null
+          review_note: string | null
           service_center_name: string | null
+          source_sheet: string | null
           status: Database["public"]["Enums"]["captain_status"]
+          supervisor_id: string | null
           team_id: string | null
           team_leader_name: string | null
           tenant_id: string
@@ -234,9 +245,13 @@ export type Database = {
           group_label?: string | null
           id?: string
           metadata?: Json
-          phone: string
+          needs_review?: boolean
+          phone?: string | null
+          review_note?: string | null
           service_center_name?: string | null
+          source_sheet?: string | null
           status?: Database["public"]["Enums"]["captain_status"]
+          supervisor_id?: string | null
           team_id?: string | null
           team_leader_name?: string | null
           tenant_id: string
@@ -252,9 +267,13 @@ export type Database = {
           group_label?: string | null
           id?: string
           metadata?: Json
-          phone?: string
+          needs_review?: boolean
+          phone?: string | null
+          review_note?: string | null
           service_center_name?: string | null
+          source_sheet?: string | null
           status?: Database["public"]["Enums"]["captain_status"]
+          supervisor_id?: string | null
           team_id?: string | null
           team_leader_name?: string | null
           tenant_id?: string
@@ -266,6 +285,13 @@ export type Database = {
             columns: ["city_id"]
             isOneToOne: false
             referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "captains_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "supervisors"
             referencedColumns: ["id"]
           },
           {
@@ -370,6 +396,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "import_batches"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cod_records_operating_day_id_fkey"
+            columns: ["operating_day_id"]
+            isOneToOne: false
+            referencedRelation: "operating_day_summaries"
+            referencedColumns: ["operating_day_id"]
           },
           {
             foreignKeyName: "cod_records_operating_day_id_fkey"
@@ -491,8 +524,22 @@ export type Database = {
             foreignKeyName: "deposit_cases_operating_day_id_fkey"
             columns: ["operating_day_id"]
             isOneToOne: false
+            referencedRelation: "operating_day_summaries"
+            referencedColumns: ["operating_day_id"]
+          },
+          {
+            foreignKeyName: "deposit_cases_operating_day_id_fkey"
+            columns: ["operating_day_id"]
+            isOneToOne: false
             referencedRelation: "operating_days"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_cases_original_operating_day_id_fkey"
+            columns: ["original_operating_day_id"]
+            isOneToOne: false
+            referencedRelation: "operating_day_summaries"
+            referencedColumns: ["operating_day_id"]
           },
           {
             foreignKeyName: "deposit_cases_original_operating_day_id_fkey"
@@ -810,6 +857,13 @@ export type Database = {
             foreignKeyName: "import_batches_operating_day_id_fkey"
             columns: ["operating_day_id"]
             isOneToOne: false
+            referencedRelation: "operating_day_summaries"
+            referencedColumns: ["operating_day_id"]
+          },
+          {
+            foreignKeyName: "import_batches_operating_day_id_fkey"
+            columns: ["operating_day_id"]
+            isOneToOne: false
             referencedRelation: "operating_days"
             referencedColumns: ["id"]
           },
@@ -1114,6 +1168,64 @@ export type Database = {
           },
         ]
       }
+      supervisors: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          membership_id: string | null
+          name: string
+          team_id: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          membership_id?: string | null
+          name: string
+          team_id?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          membership_id?: string | null
+          name?: string
+          team_id?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisors_membership_id_fkey"
+            columns: ["membership_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supervisors_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supervisors_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           city_id: string | null
@@ -1309,14 +1421,15 @@ export type Database = {
         Args: { p_actor: string; p_batch_id: string }
         Returns: Json
       }
+      current_business_date: { Args: { p_tenant_id: string }; Returns: string }
       record_deposit: {
         Args: {
           p_actor: string
           p_amount: number
           p_case_id: string
-          p_deposited_at: string | null
-          p_method: Database["public"]["Enums"]["payment_method"] | null
-          p_note: string | null
+          p_deposited_at: string
+          p_method: Database["public"]["Enums"]["payment_method"]
+          p_note: string
         }
         Returns: Json
       }

@@ -17,7 +17,9 @@ business row carries `tenant_id` and is protected by RLS.
 - Next.js 16 App Router + TypeScript + Tailwind v4, Arabic RTL UI (`lang="ar" dir="rtl"`).
 - Supabase project `CapFlow` (`mtrzckcqmgbxlnvkenpk`, eu-central-1, Postgres 17) in the `mjjallad0@gmail.com` account.
 - Schema lives in `supabase/migrations/*.sql`; applied via the Supabase MCP `apply_migration`.
-  Regenerate `src/lib/supabase/database.types.ts` after every schema change.
+  Regenerate `src/lib/supabase/database.types.ts` after every schema change. The generator
+  marks all function arguments non-nullable; cast at the call site rather than editing the
+  generated file.
 
 ## Supabase clients (`src/lib/supabase/`)
 - `client.ts` — browser, RLS as the signed-in user.
@@ -42,6 +44,19 @@ business row carries `tenant_id` and is protected by RLS.
 - Phones are canonical E.164 (`+9627XXXXXXXX`) via `src/lib/phone.ts` everywhere.
 - Permissions: `src/lib/auth/permissions.ts` (`can(role, permission)`); pages call
   `requireTenant(permission)` from `src/lib/auth/context.ts`.
+- Captains belong to a `supervisors` row (code as in the sheets' `dip.s.c`) and a team
+  (A / B / FDK). `captains.phone` may be NULL when the number belongs to someone else;
+  such rows carry `needs_review`.
+- `public.current_business_date(tenant)` mirrors Diken's `current_work_date()`: before
+  `day_start_time` (16:00 Amman) the current business day is still yesterday.
+
+## Legacy Diken project (read-only)
+The live system runs on a separate Supabase project **diken** (`debozlnlomrehhamokkh`,
+same gmail org). It is the source of the captain roster and of the rules as code
+(`current_work_date`, `upsert_deposit`, `process_cod_file`, `sync_captains`, …).
+**Never write to it.** Read with the Supabase MCP and port behaviour into CapFlow.
+`scripts/sync-captains-from-diken.mjs` loads a captains export into CapFlow
+(dry run by default, `--apply` to write).
 
 ## Source of truth for business rules
 The operator's own rules doc (Arabic, Claude Docs — read it with the docs connector,
