@@ -92,6 +92,29 @@ export async function applyRiderBatch(input: { tenantId: string; userId: string;
   return rpc.data as { applied: number; visa_only: number; skipped: number };
 }
 
+export async function setSupervisorNote(input: {
+  tenantId: string;
+  userId: string;
+  caseId: string;
+  note: string | null;
+}): Promise<string | null> {
+  const admin = createAdminClient();
+  const { data: found, error } = await admin
+    .from("deposit_cases")
+    .select("id")
+    .eq("id", input.caseId)
+    .eq("tenant_id", input.tenantId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!found) throw new Error("الحالة غير موجودة");
+
+  const args = { p_case_id: input.caseId, p_actor: input.userId, p_note: input.note } as unknown as
+    Database["public"]["Functions"]["set_supervisor_note"]["Args"];
+  const rpc = await admin.rpc("set_supervisor_note", args);
+  if (rpc.error) throw new Error(`تعذّر حفظ الملاحظة: ${rpc.error.message}`);
+  return rpc.data as string | null;
+}
+
 export async function recordDeposit(input: {
   tenantId: string;
   userId: string;

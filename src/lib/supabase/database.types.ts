@@ -291,6 +291,13 @@ export type Database = {
             foreignKeyName: "captains_supervisor_id_fkey"
             columns: ["supervisor_id"]
             isOneToOne: false
+            referencedRelation: "day_supervisor_summaries"
+            referencedColumns: ["supervisor_id"]
+          },
+          {
+            foreignKeyName: "captains_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
             referencedRelation: "supervisors"
             referencedColumns: ["id"]
           },
@@ -444,6 +451,7 @@ export type Database = {
           payout_deduction: number
           review_reason: string | null
           status: Database["public"]["Enums"]["deposit_status"]
+          supervisor_note: string | null
           tenant_id: string
           updated_at: string
           variance_amount: number | null
@@ -472,6 +480,7 @@ export type Database = {
           payout_deduction?: number
           review_reason?: string | null
           status?: Database["public"]["Enums"]["deposit_status"]
+          supervisor_note?: string | null
           tenant_id: string
           updated_at?: string
           variance_amount?: number | null
@@ -500,6 +509,7 @@ export type Database = {
           payout_deduction?: number
           review_reason?: string | null
           status?: Database["public"]["Enums"]["deposit_status"]
+          supervisor_note?: string | null
           tenant_id?: string
           updated_at?: string
           variance_amount?: number | null
@@ -1382,6 +1392,44 @@ export type Database = {
       }
     }
     Views: {
+      day_supervisor_summaries: {
+        Row: {
+          awaiting: number | null
+          cases: number | null
+          collected_total: number | null
+          deposited_total: number | null
+          operating_day_id: string | null
+          overdue: number | null
+          review: number | null
+          supervisor_code: string | null
+          supervisor_id: string | null
+          supervisor_name: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deposit_cases_operating_day_id_fkey"
+            columns: ["operating_day_id"]
+            isOneToOne: false
+            referencedRelation: "operating_day_summaries"
+            referencedColumns: ["operating_day_id"]
+          },
+          {
+            foreignKeyName: "deposit_cases_operating_day_id_fkey"
+            columns: ["operating_day_id"]
+            isOneToOne: false
+            referencedRelation: "operating_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_cases_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operating_day_summaries: {
         Row: {
           awaiting: number | null
@@ -1432,6 +1480,10 @@ export type Database = {
           p_note: string
         }
         Returns: Json
+      }
+      set_supervisor_note: {
+        Args: { p_actor: string; p_case_id: string; p_note: string }
+        Returns: string
       }
     }
     Enums: {

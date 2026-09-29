@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireTenant } from "@/lib/auth/context";
-import { recordDeposit } from "@/lib/days/service";
+import { recordDeposit, setSupervisorNote } from "@/lib/days/service";
 import type { Database } from "@/lib/supabase/database.types";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
@@ -69,4 +69,22 @@ function toTenantInstant(local: string, timeZone: string): string {
   const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
   const asIfUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"));
   return new Date(guess - (asIfUtc - guess)).toISOString();
+}
+
+export type NoteState = { error?: string; saved?: boolean };
+
+export async function submitSupervisorNote(_prev: NoteState, formData: FormData): Promise<NoteState> {
+  const ctx = await requireTenant("deposits.note");
+  const caseId = String(formData.get("caseId") ?? "");
+  const businessDate = String(formData.get("businessDate") ?? "");
+  const note = String(formData.get("note") ?? "").trim();
+  if (!caseId) return { error: "الحالة مفقودة." };
+
+  try {
+    await setSupervisorNote({ tenantId: ctx.tenantId, userId: ctx.userId, caseId, note: note || null });
+    revalidatePath(`/days/${businessDate}`);
+    return { saved: true };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "تعذّر حفظ الملاحظة." };
+  }
 }

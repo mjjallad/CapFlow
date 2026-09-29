@@ -6,7 +6,8 @@ export type Permission =
   | "captains.manage"
   | "days.read"
   | "days.import"
-  | "deposits.record";
+  | "deposits.record"
+  | "deposits.note";
 
 const ALL: readonly AppRole[] = ["owner", "admin", "accountant", "supervisor", "reviewer", "operator", "viewer"];
 
@@ -18,6 +19,7 @@ const GRANTS: Record<Permission, readonly AppRole[]> = {
   "days.read": ALL,
   "days.import": ["owner", "admin", "operator", "accountant"],
   "deposits.record": ["owner", "admin", "operator", "accountant", "supervisor"],
+  "deposits.note": ["owner", "admin", "operator", "accountant", "supervisor", "reviewer"],
 };
 
 export function can(role: AppRole, permission: Permission): boolean {

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DepositStatusBadge, type DepositStatus } from "@/components/deposit-status";
 import { formatDateTime, formatMoney, weekdayArabic } from "@/lib/dates";
 import { DepositForm } from "./deposit-form";
+import { NoteForm } from "./note-form";
 
 const PAGE_SIZE = 200;
 
@@ -20,12 +21,13 @@ const TABS: { key: string; label: string; statuses: DepositStatus[] | null }[] =
 
 export default async function DayPage({ params, searchParams }: PageProps<"/days/[date]">) {
   const { date } = await params;
-  const { tab: tabParam, q, page } = await searchParams;
+  const { tab: tabParam, q, page, supervisor: supervisorParam } = await searchParams;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) notFound();
 
   const ctx = await requireTenant("days.read");
   const { currency_code: currency, timezone: tz } = ctx.membership.tenant;
   const canRecord = can(ctx.membership.role, "deposits.record");
+  const canNote = can(ctx.membership.role, "deposits.note");
   const supabase = await createClient();
 
   const { data: day } = await supabase
@@ -37,12 +39,21 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
 
   const tab = TABS.find((t) => t.key === tabParam) ?? TABS[0];
   const query = typeof q === "string" ? q.trim() : "";
+  const supervisorCode = typeof supervisorParam === "string" ? supervisorParam : "";
   const pageNumber = Math.max(1, Number(typeof page === "string" ? page : 1) || 1);
+
+  const { data: supervisorRows } = await supabase
+    .from("day_supervisor_summaries")
+    .select("*")
+    .eq("operating_day_id", day.operating_day_id!)
+    .order("supervisor_code");
+  const supervisors = supervisorRows ?? [];
+  const selectedSupervisor = supervisors.find((s) => s.supervisor_code === supervisorCode);
 
   let request = supabase
     .from("deposit_cases")
     .select(
-      "id, status, collected_amount, expected_amount, deposited_amount, withdrawn_amount, allowed_deduction, deduction_rate, completed_deliveries, payment_method, is_late, deposited_at, review_reason, notes, captain:captains!inner(id, external_user_id, full_name, phone, service_center_name, group_label)",
+      "id, status, collected_amount, expected_amount, deposited_amount, withdrawn_amount, allowed_deduction, deduction_rate, completed_deliveries, payment_method, is_late, deposited_at, review_reason, notes, supervisor_note, captain:captains!inner(id, external_user_id, full_name, phone, service_center_name, group_label, supervisor:supervisors(code, name))",
       { count: "exact" },
     )
     .eq("operating_day_id", day.operating_day_id!)
@@ -51,6 +62,9 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
     .range((pageNumber - 1) * PAGE_SIZE, pageNumber * PAGE_SIZE - 1);
 
   if (tab.statuses) request = request.in("status", tab.statuses);
+  if (selectedSupervisor) {
+    request = request.eq("captain.supervisor_id", selectedSupervisor.supervisor_id!);
+  }
   if (query) {
     request = request.or(
       `full_name.ilike.%${query}%,phone.ilike.%${query}%,external_user_id.ilike.%${query}%`,
@@ -61,7 +75,8 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
   const { data: cases, count } = await request;
   const total = count ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const hrefFor = (p: number, t = tab.key) => `/days/${date}?tab=${t}&q=${encodeURIComponent(query)}&page=${p}`;
+  const hrefFor = (p: number, t = tab.key, sup = supervisorCode) =>
+    `/days/${date}?tab=${t}&q=${encodeURIComponent(query)}&supervisor=${encodeURIComponent(sup)}&page=${p}`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -83,6 +98,35 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
         <Stat label="متأخر / مراجعة" value={`${day.overdue ?? 0} / ${day.review ?? 0}`} />
       </div>
 
+      {supervisors.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={hrefFor(1, tab.key, "")}
+            className={`rounded-lg border px-3 py-1.5 text-sm ${
+              supervisorCode ? "border-border hover:bg-surface" : "border-accent bg-surface font-medium"
+            }`}
+          >
+            كل المشرفين
+          </Link>
+          {supervisors.map((s) => (
+            <Link
+              key={s.supervisor_id}
+              href={hrefFor(1, tab.key, s.supervisor_code!)}
+              className={`rounded-lg border px-3 py-1.5 text-sm ${
+                s.supervisor_code === supervisorCode
+                  ? "border-accent bg-surface font-medium"
+                  : "border-border hover:bg-surface"
+              }`}
+            >
+              {s.supervisor_name}
+              <span className="ms-2 text-xs text-muted" dir="ltr">
+                {s.awaiting}/{s.cases}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
         {TABS.map((t) => (
           <Link
@@ -97,6 +141,7 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
         ))}
         <form className="ms-auto flex gap-2">
           <input type="hidden" name="tab" value={tab.key} />
+          <input type="hidden" name="supervisor" value={supervisorCode} />
           <input
             name="q"
             defaultValue={query}
@@ -124,6 +169,7 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
                 <th className="px-3 py-2 text-start font-medium">المودَع</th>
                 <th className="px-3 py-2 text-start font-medium">المسحوب</th>
                 <th className="px-3 py-2 text-start font-medium">وقت الإيداع</th>
+                <th className="px-3 py-2 text-start font-medium">ملاحظة المشرف</th>
                 {canRecord && <th className="px-3 py-2 text-start font-medium"></th>}
               </tr>
             </thead>
@@ -135,7 +181,10 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
                     <div className="text-xs text-muted" dir="ltr">
                       {c.captain.external_user_id} · {c.captain.phone}
                     </div>
-                    {c.captain.group_label && <div className="text-xs text-muted" dir="auto">{c.captain.group_label}</div>}
+                    <div className="text-xs text-muted" dir="auto">
+                      {c.captain.supervisor?.name ?? "بلا مشرف"}
+                      {c.captain.group_label ? ` · ${c.captain.group_label}` : ""}
+                    </div>
                   </td>
                   <td className="px-3 py-2">
                     <DepositStatusBadge status={c.status} />
@@ -168,6 +217,13 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
                     )}
                   </td>
                   <td className="px-3 py-2 text-xs text-muted" dir="ltr">{formatDateTime(c.deposited_at, tz)}</td>
+                  <td className="px-3 py-2">
+                    {canNote ? (
+                      <NoteForm caseId={c.id} businessDate={date} note={c.supervisor_note} />
+                    ) : (
+                      <span className="text-xs" dir="auto">{c.supervisor_note ?? "—"}</span>
+                    )}
+                  </td>
                   {canRecord && (
                     <td className="px-3 py-2">
                       {!["matched", "approved", "cancelled", "rejected"].includes(c.status) && (
