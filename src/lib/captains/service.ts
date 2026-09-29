@@ -12,19 +12,19 @@ const PHOTO_BUCKET = "captain-photos";
 const DOCUMENT_BUCKET = "captain-documents";
 const SIGNED_URL_TTL = 60 * 10; // seconds
 
-/** A free-form identifier the office keeps, e.g. "رقم التأمين" → "12345". */
-export type Identifier = { label: string; value: string };
+/** A person who vouches for the captain: their name, ID number and phone. */
+export type Referrer = { name: string; national_id: string; phone: string };
 
 export type CaptainEdit = {
   full_name: string;
   phone: string | null;
+  phone_secondary: string | null;
   external_user_id: string | null;
   national_id: string | null;
-  identifiers: Identifier[];
+  referrers: Referrer[];
   team_id: string | null;
   vehicle_kinds: VehicleKind[];
   whatsapp_group: string | null;
-  service_center_name: string | null;
   city_id: string | null;
   status: CaptainStatus;
   deduction_rate: number;
@@ -103,20 +103,30 @@ export async function updateCaptain(input: {
   const phone = input.edit.phone ? normalizeJordanPhone(input.edit.phone) : null;
   if (input.edit.phone && !phone) throw new Error("رقم الهاتف غير صالح");
 
-  const identifiers = input.edit.identifiers
-    .map((i) => ({ label: i.label.trim(), value: i.value.trim() }))
-    .filter((i) => i.label || i.value);
+  const phoneSecondary = input.edit.phone_secondary ? normalizeJordanPhone(input.edit.phone_secondary) : null;
+  if (input.edit.phone_secondary && !phoneSecondary) throw new Error("رقم الهاتف الثاني غير صالح");
+  if (phone && phoneSecondary && phone === phoneSecondary) throw new Error("رقما الهاتف متطابقان");
+
+  // A referrer's phone goes through the same normalization as a captain's, but a
+  // number we cannot parse is kept as typed rather than rejecting the whole save.
+  const referrers = input.edit.referrers
+    .map((r) => ({
+      name: r.name.trim(),
+      national_id: r.national_id.trim(),
+      phone: normalizeJordanPhone(r.phone) ?? r.phone.trim(),
+    }))
+    .filter((r) => r.name || r.national_id || r.phone);
 
   const patch = {
     full_name: input.edit.full_name.trim(),
     phone,
+    phone_secondary: phoneSecondary,
     external_user_id: clean(input.edit.external_user_id),
     national_id: clean(input.edit.national_id),
-    identifiers: identifiers as unknown as Json,
+    referrers: referrers as unknown as Json,
     team_id: input.edit.team_id,
     vehicle_kinds: input.edit.vehicle_kinds,
     whatsapp_group: clean(input.edit.whatsapp_group),
-    service_center_name: clean(input.edit.service_center_name),
     city_id: input.edit.city_id,
     status: input.edit.status,
     deduction_rate: input.edit.deduction_rate,

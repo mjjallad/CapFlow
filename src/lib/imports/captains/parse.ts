@@ -7,7 +7,6 @@ const COLUMN_ALIASES: Record<keyof CaptainRowInput, string[]> = {
   fullName: ["name", "full name", "full_name", "captain", "الاسم", "اسم الكابتن"],
   phone: ["po.number", "po number", "phone", "mobile", "الهاتف", "رقم الهاتف", "الجوال"],
   city: ["city", "المدينة"],
-  serviceCenter: ["s.c name", "sc name", "service center", "service_center", "مركز الخدمة"],
   groupLabel: ["dip.s.c", "dip s.c", "group", "المجموعة"],
   teamLeader: ["team leader", "team_leader", "team", "الفريق", "قائد الفريق"],
   status: ["status", "الحالة"],
@@ -18,7 +17,6 @@ export type CaptainRowInput = {
   fullName: string | null;
   phone: string | null;
   city: string | null;
-  serviceCenter: string | null;
   groupLabel: string | null;
   teamLeader: string | null;
   status: string | null;
@@ -29,7 +27,6 @@ export type NormalizedCaptain = {
   full_name: string;
   phone: string;
   city: string | null;
-  service_center_name: string | null;
   group_label: string | null;
   team_name: string | null;
   team_leader_name: string | null;
@@ -120,7 +117,6 @@ export function parseCaptainRows(
             full_name: fullName!,
             phone: phone!,
             city: read(cells, "city"),
-            service_center_name: read(cells, "serviceCenter"),
             group_label: read(cells, "groupLabel"),
             team_name: read(cells, "teamLeader"),
             team_leader_name: read(cells, "teamLeader"),

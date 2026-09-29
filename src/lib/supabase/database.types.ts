@@ -288,15 +288,15 @@ export type Database = {
           full_name: string
           group_label: string | null
           id: string
-          identifiers: Json
           metadata: Json
           national_id: string | null
           needs_review: boolean
           notes: string | null
           phone: string | null
+          phone_secondary: string | null
           photo_path: string | null
+          referrers: Json
           review_note: string | null
-          service_center_name: string | null
           source_sheet: string | null
           status: Database["public"]["Enums"]["captain_status"]
           team_id: string | null
@@ -317,15 +317,15 @@ export type Database = {
           full_name: string
           group_label?: string | null
           id?: string
-          identifiers?: Json
           metadata?: Json
           national_id?: string | null
           needs_review?: boolean
           notes?: string | null
           phone?: string | null
+          phone_secondary?: string | null
           photo_path?: string | null
+          referrers?: Json
           review_note?: string | null
-          service_center_name?: string | null
           source_sheet?: string | null
           status?: Database["public"]["Enums"]["captain_status"]
           team_id?: string | null
@@ -346,15 +346,15 @@ export type Database = {
           full_name?: string
           group_label?: string | null
           id?: string
-          identifiers?: Json
           metadata?: Json
           national_id?: string | null
           needs_review?: boolean
           notes?: string | null
           phone?: string | null
+          phone_secondary?: string | null
           photo_path?: string | null
+          referrers?: Json
           review_note?: string | null
-          service_center_name?: string | null
           source_sheet?: string | null
           status?: Database["public"]["Enums"]["captain_status"]
           team_id?: string | null

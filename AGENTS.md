@@ -50,8 +50,9 @@ business row carries `tenant_id` and is protected by RLS.
 - `captains.phone` may be NULL when the number belongs to someone else; such rows carry
   `needs_review`.
 - `/captains/[captainId]` is the captain's profile: identity, team, WhatsApp group, photo
-  free identifier rows (`captains.identifiers` jsonb), contract file number, activation
-  date, photo and notes — all editable under `captains.manage`. Scanned papers live in
+  two phone numbers, the referrers who vouched for them (`captains.referrers` jsonb:
+  name + national id + phone), contract file number, activation date, photo and notes —
+  all editable under `captains.manage`. Scanned papers live in
   `captain_documents` + the private `captain-documents` bucket. Both buckets are private
   and shown through short-lived signed URLs (`next/image` with `unoptimized`). Every edit
   writes an `audit_logs` row with only the changed fields.

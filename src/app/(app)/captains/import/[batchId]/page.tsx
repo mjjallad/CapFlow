@@ -97,7 +97,6 @@ export default async function ImportBatchPage({ params }: PageProps<"/captains/i
                 <th className="px-3 py-2 text-start font-medium">الاسم</th>
                 <th className="px-3 py-2 text-start font-medium">الهاتف</th>
                 <th className="px-3 py-2 text-start font-medium">المدينة</th>
-                <th className="px-3 py-2 text-start font-medium">مركز الخدمة</th>
                 <th className="px-3 py-2 text-start font-medium">الفريق</th>
               </tr>
             </thead>
@@ -111,7 +110,6 @@ export default async function ImportBatchPage({ params }: PageProps<"/captains/i
                     <td className="px-3 py-2" dir="auto">{d.full_name}</td>
                     <td className="px-3 py-2 tabular-nums" dir="ltr">{d.phone}</td>
                     <td className="px-3 py-2" dir="auto">{d.city ?? "—"}</td>
-                    <td className="px-3 py-2" dir="auto">{d.service_center_name ?? "—"}</td>
                     <td className="px-3 py-2" dir="auto">{d.team_name ?? "—"}</td>
                   </tr>
                 );

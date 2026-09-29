@@ -5,19 +5,19 @@ import { saveCaptain, type SaveState } from "./actions";
 import { VEHICLE_LABELS, VEHICLE_ORDER, type VehicleKind } from "@/components/vehicle";
 
 type Option = { id: string; name: string };
-type Identifier = { label: string; value: string };
+type Referrer = { name: string; national_id: string; phone: string };
 
 export type CaptainFields = {
   id: string;
   full_name: string;
   phone: string | null;
+  phone_secondary: string | null;
   external_user_id: string | null;
   national_id: string | null;
-  identifiers: Identifier[];
+  referrers: Referrer[];
   team_id: string | null;
   vehicle_kinds: VehicleKind[];
   whatsapp_group: string | null;
-  service_center_name: string | null;
   city_id: string | null;
   status: "active" | "inactive" | "suspended";
   deduction_rate: number;
@@ -43,15 +43,15 @@ export function CaptainEditForm({
   readOnly: boolean;
 }) {
   const [state, action, pending] = useActionState<SaveState, FormData>(saveCaptain, {});
-  const [identifiers, setIdentifiers] = useState<Identifier[]>(captain.identifiers);
+  const [referrers, setReferrers] = useState<Referrer[]>(captain.referrers);
 
-  const updateIdentifier = (index: number, patch: Partial<Identifier>) =>
-    setIdentifiers((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+  const updateReferrer = (index: number, patch: Partial<Referrer>) =>
+    setReferrers((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
 
   return (
     <form action={action} className="flex flex-col gap-5">
       <input type="hidden" name="captainId" value={captain.id} />
-      <input type="hidden" name="identifiers" value={JSON.stringify(identifiers)} />
+      <input type="hidden" name="referrers" value={JSON.stringify(referrers)} />
 
       <Section title="البيانات الشخصية">
         <Field label="الاسم الكامل">
@@ -59,6 +59,16 @@ export function CaptainEditForm({
         </Field>
         <Field label="رقم الهاتف">
           <input name="phone" defaultValue={captain.phone ?? ""} disabled={readOnly} className={inputClass} dir="ltr" placeholder="+9627…" />
+        </Field>
+        <Field label="رقم هاتف ثانٍ">
+          <input
+            name="phone_secondary"
+            defaultValue={captain.phone_secondary ?? ""}
+            disabled={readOnly}
+            className={inputClass}
+            dir="ltr"
+            placeholder="+9627…"
+          />
         </Field>
         <Field label="الرقم الوطني">
           <input name="national_id" defaultValue={captain.national_id ?? ""} disabled={readOnly} className={inputClass} dir="ltr" />
@@ -68,32 +78,41 @@ export function CaptainEditForm({
         </Field>
 
         <div className="sm:col-span-2">
-          <div className="mb-1.5 text-sm font-medium">أرقام معرّفات أخرى</div>
+          <div className="mb-1.5 text-sm font-medium">المعرِّفون</div>
+          <p className="mb-2 text-xs text-muted">من عرّف الكابتن أو كفله — الاسم ورقمه وتلفونه.</p>
           <div className="flex flex-col gap-2">
-            {identifiers.map((row, index) => (
-              <div key={index} className="flex gap-2">
+            {referrers.map((row, index) => (
+              <div key={index} className="flex flex-wrap gap-2">
                 <input
-                  value={row.label}
-                  onChange={(e) => updateIdentifier(index, { label: e.target.value })}
-                  placeholder="نوع الرقم"
+                  value={row.name}
+                  onChange={(e) => updateReferrer(index, { name: e.target.value })}
+                  placeholder="الاسم"
                   disabled={readOnly}
-                  className={`${inputClass} sm:w-48`}
+                  className={`${inputClass} sm:w-52`}
                   dir="auto"
                 />
                 <input
-                  value={row.value}
-                  onChange={(e) => updateIdentifier(index, { value: e.target.value })}
+                  value={row.national_id}
+                  onChange={(e) => updateReferrer(index, { national_id: e.target.value })}
                   placeholder="الرقم"
                   disabled={readOnly}
-                  className={inputClass}
+                  className={`${inputClass} sm:w-40`}
+                  dir="ltr"
+                />
+                <input
+                  value={row.phone}
+                  onChange={(e) => updateReferrer(index, { phone: e.target.value })}
+                  placeholder="رقم الهاتف"
+                  disabled={readOnly}
+                  className={`${inputClass} sm:w-40`}
                   dir="ltr"
                 />
                 {!readOnly && (
                   <button
                     type="button"
-                    onClick={() => setIdentifiers((rows) => rows.filter((_, i) => i !== index))}
+                    onClick={() => setReferrers((rows) => rows.filter((_, i) => i !== index))}
                     className="rounded-md border border-border px-3 text-sm text-muted hover:text-danger"
-                    aria-label="حذف الرقم"
+                    aria-label="حذف المعرِّف"
                   >
                     ×
                   </button>
@@ -103,13 +122,13 @@ export function CaptainEditForm({
             {!readOnly && (
               <button
                 type="button"
-                onClick={() => setIdentifiers((rows) => [...rows, { label: "", value: "" }])}
+                onClick={() => setReferrers((rows) => [...rows, { name: "", national_id: "", phone: "" }])}
                 className="self-start rounded-md border border-border px-3 py-1.5 text-sm hover:bg-background"
               >
-                + إضافة رقم
+                + إضافة معرِّف
               </button>
             )}
-            {identifiers.length === 0 && readOnly && <span className="text-sm text-muted">—</span>}
+            {referrers.length === 0 && readOnly && <span className="text-sm text-muted">—</span>}
           </div>
         </div>
       </Section>
@@ -176,9 +195,6 @@ export function CaptainEditForm({
         </Field>
         <Field label="مجموعة واتساب">
           <input name="whatsapp_group" defaultValue={captain.whatsapp_group ?? ""} disabled={readOnly} className={inputClass} dir="auto" />
-        </Field>
-        <Field label="مركز الخدمة">
-          <input name="service_center_name" defaultValue={captain.service_center_name ?? ""} disabled={readOnly} className={inputClass} dir="auto" />
         </Field>
         <Field label="رقم ملف العقد" hint="رقم الملف الورقي الذي يُحفظ فيه العقد.">
           <input name="contract_file_number" defaultValue={captain.contract_file_number ?? ""} disabled={readOnly} className={inputClass} dir="ltr" />

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { requireTenant } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-import { listDocuments, photoUrl, type Identifier } from "@/lib/captains/service";
+import { listDocuments, photoUrl, type Referrer } from "@/lib/captains/service";
 import { DepositStatusBadge } from "@/components/deposit-status";
 import { formatMoney, weekdayArabic } from "@/lib/dates";
 import { CaptainEditForm, type CaptainFields } from "./edit-form";
@@ -24,7 +24,7 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
   const { data: captain } = await supabase
     .from("captains")
     .select(
-      "id, full_name, phone, external_user_id, national_id, identifiers, team_id, vehicle_kinds, whatsapp_group, service_center_name, city_id, status, deduction_rate, contract_file_number, activated_on, notes, photo_path, needs_review, review_note, team:teams(name), city:cities(name)",
+      "id, full_name, phone, phone_secondary, external_user_id, national_id, referrers, team_id, vehicle_kinds, whatsapp_group, city_id, status, deduction_rate, contract_file_number, activated_on, notes, photo_path, needs_review, review_note, team:teams(name), city:cities(name)",
     )
     .eq("id", captainId)
     .maybeSingle();
@@ -47,13 +47,13 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
     id: captain.id,
     full_name: captain.full_name,
     phone: captain.phone,
+    phone_secondary: captain.phone_secondary,
     external_user_id: captain.external_user_id,
     national_id: captain.national_id,
-    identifiers: (captain.identifiers ?? []) as unknown as Identifier[],
+    referrers: (captain.referrers ?? []) as unknown as Referrer[],
     team_id: captain.team_id,
     vehicle_kinds: captain.vehicle_kinds ?? [],
     whatsapp_group: captain.whatsapp_group,
-    service_center_name: captain.service_center_name,
     city_id: captain.city_id,
     status: captain.status,
     deduction_rate: captain.deduction_rate,
@@ -95,6 +95,7 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
           </h1>
           <dl className="mt-3 grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
             <Row label="الهاتف" value={captain.phone} ltr />
+            <Row label="هاتف ثانٍ" value={captain.phone_secondary} ltr />
             <Row label="معرّف المنصة" value={captain.external_user_id} ltr />
             <Row label="الرقم الوطني" value={captain.national_id} ltr />
             <Row label="الفريق" value={captain.team?.name ? `فريق ${captain.team.name}` : null} />
@@ -103,8 +104,13 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
             <Row label="المركبات" value={vehicleSummary(captain.vehicle_kinds)} />
             <Row label="تاريخ التفعيل" value={captain.activated_on} ltr />
             <Row label="رقم ملف العقد" value={captain.contract_file_number} ltr />
-            {((captain.identifiers ?? []) as unknown as Identifier[]).map((id, i) => (
-              <Row key={i} label={id.label || "معرّف"} value={id.value} ltr />
+            {((captain.referrers ?? []) as unknown as Referrer[]).map((r, i) => (
+              <Row
+                key={i}
+                label={`معرِّف: ${r.name || "—"}`}
+                value={[r.national_id, r.phone].filter(Boolean).join(" · ") || null}
+                ltr
+              />
             ))}
           </dl>
           {captain.needs_review && (

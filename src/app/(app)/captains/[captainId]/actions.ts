@@ -7,7 +7,7 @@ import {
   deleteCaptainDocument,
   setCaptainPhoto,
   updateCaptain,
-  type Identifier,
+  type Referrer,
 } from "@/lib/captains/service";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -24,14 +24,18 @@ const DOCUMENT_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pd
 
 export type SaveState = { error?: string; saved?: boolean };
 
-/** The identifier rows travel as JSON from the client component. */
-function parseIdentifiers(raw: string): Identifier[] {
+/** The referrer rows travel as JSON from the client component. */
+function parseReferrers(raw: string): Referrer[] {
   try {
     const parsed: unknown = JSON.parse(raw || "[]");
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .filter((i): i is Record<string, unknown> => typeof i === "object" && i !== null)
-      .map((i) => ({ label: String(i.label ?? ""), value: String(i.value ?? "") }));
+      .filter((r): r is Record<string, unknown> => typeof r === "object" && r !== null)
+      .map((r) => ({
+        name: String(r.name ?? ""),
+        national_id: String(r.national_id ?? ""),
+        phone: String(r.phone ?? ""),
+      }));
   } catch {
     return [];
   }
@@ -66,13 +70,13 @@ export async function saveCaptain(_prev: SaveState, formData: FormData): Promise
       edit: {
         full_name: String(formData.get("full_name") ?? "").trim(),
         phone: text("phone"),
+        phone_secondary: text("phone_secondary"),
         external_user_id: text("external_user_id"),
         national_id: text("national_id"),
-        identifiers: parseIdentifiers(String(formData.get("identifiers") ?? "")),
+        referrers: parseReferrers(String(formData.get("referrers") ?? "")),
         team_id: text("team_id"),
         vehicle_kinds: vehicleKinds,
         whatsapp_group: text("whatsapp_group"),
-        service_center_name: text("service_center_name"),
         city_id: text("city_id"),
         status: STATUSES.includes(statusRaw as CaptainStatus) ? (statusRaw as CaptainStatus) : "active",
         deduction_rate: rate,
