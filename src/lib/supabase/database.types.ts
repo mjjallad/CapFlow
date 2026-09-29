@@ -223,8 +223,11 @@ export type Database = {
           group_label: string | null
           id: string
           metadata: Json
+          national_id: string | null
           needs_review: boolean
+          notes: string | null
           phone: string | null
+          photo_path: string | null
           review_note: string | null
           service_center_name: string | null
           source_sheet: string | null
@@ -234,6 +237,7 @@ export type Database = {
           tenant_id: string
           updated_at: string
           vehicle_type: Database["public"]["Enums"]["vehicle_type"] | null
+          whatsapp_group: string | null
         }
         Insert: {
           archived_at?: string | null
@@ -245,8 +249,11 @@ export type Database = {
           group_label?: string | null
           id?: string
           metadata?: Json
+          national_id?: string | null
           needs_review?: boolean
+          notes?: string | null
           phone?: string | null
+          photo_path?: string | null
           review_note?: string | null
           service_center_name?: string | null
           source_sheet?: string | null
@@ -256,6 +263,7 @@ export type Database = {
           tenant_id: string
           updated_at?: string
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"] | null
+          whatsapp_group?: string | null
         }
         Update: {
           archived_at?: string | null
@@ -267,8 +275,11 @@ export type Database = {
           group_label?: string | null
           id?: string
           metadata?: Json
+          national_id?: string | null
           needs_review?: boolean
+          notes?: string | null
           phone?: string | null
+          photo_path?: string | null
           review_note?: string | null
           service_center_name?: string | null
           source_sheet?: string | null
@@ -278,6 +289,7 @@ export type Database = {
           tenant_id?: string
           updated_at?: string
           vehicle_type?: Database["public"]["Enums"]["vehicle_type"] | null
+          whatsapp_group?: string | null
         }
         Relationships: [
           {

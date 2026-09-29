@@ -49,6 +49,12 @@ business row carries `tenant_id` and is protected by RLS.
   (`company_car` / `company_scooter`). The day board and the captains list group by team.
 - `captains.phone` may be NULL when the number belongs to someone else; such rows carry
   `needs_review`.
+- `/captains/[captainId]` is the captain's profile: identity, team, WhatsApp group, photo
+  and free notes, all editable under `captains.manage`. Photos live in the private
+  `captain-photos` bucket and are shown through short-lived signed URLs (`next/image`
+  with `unoptimized`). Every edit writes an `audit_logs` row with only the changed fields.
+- `deposit_cases` has two foreign keys to `operating_days`, so embeds must name the
+  constraint: `operating_days!deposit_cases_operating_day_id_fkey(...)`.
 - `public.current_business_date(tenant)` mirrors Diken's `current_work_date()`: before
   `day_start_time` (16:00 Amman) the current business day is still yesterday.
 

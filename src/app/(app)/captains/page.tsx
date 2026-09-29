@@ -100,7 +100,11 @@ export default async function CaptainsPage({ searchParams }: PageProps<"/captain
               {captains.map((c) => (
                 <tr key={c.id} className="border-t border-border">
                   <td className="px-3 py-2 tabular-nums" dir="ltr">{c.external_user_id ?? "—"}</td>
-                  <td className="px-3 py-2" dir="auto">{c.full_name}</td>
+                  <td className="px-3 py-2">
+                    <Link href={`/captains/${c.id}`} className="hover:underline" dir="auto">
+                      {c.full_name}
+                    </Link>
+                  </td>
                   <td className="px-3 py-2 tabular-nums" dir="ltr">{c.phone}</td>
                   <td className="px-3 py-2" dir="auto">{c.city?.name ?? "—"}</td>
                   <td className="px-3 py-2" dir="auto">{c.vehicle_type ? VEHICLE_LABELS[c.vehicle_type] : "—"}</td>
