@@ -50,6 +50,14 @@ business row carries `tenant_id` and is protected by RLS.
 - `public.current_business_date(tenant)` mirrors Diken's `current_work_date()`: before
   `day_start_time` (16:00 Amman) the current business day is still yesterday.
 
+## Working agreement
+Everything in `deposit_cases`, `cod_records`, `attendance_records`, `deposit_events`
+and `import_batches` today is **test data** from trial imports (business date
+2026-09-17). We keep building and refining until the user calls "phase zero"; only
+when the user explicitly asks do we wipe those tables and start recording real days.
+Never delete operational data before that word comes. The captain roster, supervisors
+and teams are real and stay.
+
 ## Legacy Diken project (read-only)
 The live system runs on a separate Supabase project **diken** (`debozlnlomrehhamokkh`,
 same gmail org). It is the source of the captain roster and of the rules as code
