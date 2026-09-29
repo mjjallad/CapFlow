@@ -10,8 +10,6 @@ export type Membership = {
   id: string;
   role: AppRole;
   tenant: { id: string; name: string; slug: string; timezone: string; currency_code: string };
-  /** Set when this member is one of the tenant's supervisors. */
-  supervisor: { id: string; code: string; name: string } | null;
 };
 
 export type AppContext = {
@@ -31,7 +29,7 @@ export const getAppContext = cache(async (): Promise<AppContext> => {
 
   const { data, error } = await supabase
     .from("tenant_memberships")
-    .select("id, role, tenant:tenants!inner(id, name, slug, timezone, currency_code), supervisors(id, code, name)")
+    .select("id, role, tenant:tenants!inner(id, name, slug, timezone, currency_code)")
     .eq("is_active", true)
     .order("created_at");
 
@@ -40,12 +38,7 @@ export const getAppContext = cache(async (): Promise<AppContext> => {
   return {
     userId: user.id,
     email: user.email ?? null,
-    memberships: data.map((m) => ({
-      id: m.id,
-      role: m.role,
-      tenant: m.tenant,
-      supervisor: m.supervisors[0] ?? null,
-    })),
+    memberships: data.map((m) => ({ id: m.id, role: m.role, tenant: m.tenant })),
   };
 });
 

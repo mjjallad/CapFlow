@@ -1,46 +1,71 @@
 import { requireTenant } from "@/lib/auth/context";
-import { listSupervisors } from "@/lib/team/service";
-import { LinkForm } from "./link-form";
+import { createClient } from "@/lib/supabase/server";
+import { VEHICLE_LABELS, type VehicleType } from "@/components/vehicle";
 
 export default async function TeamPage() {
-  const ctx = await requireTenant("team.manage");
-  const supervisors = await listSupervisors(ctx.tenantId);
+  await requireTenant("captains.read");
+  const supabase = await createClient();
+
+  const { data: teams } = await supabase.from("teams").select("id, name").eq("is_active", true).order("name");
+  const { data: captains } = await supabase
+    .from("captains")
+    .select("team_id, vehicle_type, status")
+    .is("archived_at", null);
+
+  type Tally = { total: number; active: number; vehicles: Map<VehicleType, number> };
+  const tally = new Map<string, Tally>();
+  let unassigned = 0;
+  for (const c of captains ?? []) {
+    if (!c.team_id) {
+      unassigned += 1;
+      continue;
+    }
+    const t = tally.get(c.team_id) ?? { total: 0, active: 0, vehicles: new Map() };
+    t.total += 1;
+    if (c.status === "active") t.active += 1;
+    if (c.vehicle_type) t.vehicles.set(c.vehicle_type, (t.vehicles.get(c.vehicle_type) ?? 0) + 1);
+    tally.set(c.team_id, t);
+  }
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-xl font-semibold">المشرفون</h1>
+        <h1 className="text-xl font-semibold">الفرق</h1>
         <p className="mt-1 text-sm text-muted">
-          اربط كل مشرف بحسابه ليرى كباتنه فقط عند الدخول. الحساب يجب أن يكون منشأً مسبقًا في Supabase.
+          كباتن فريقَي A وB يعملون على مركباتهم، وفريق FDK على مركبات الشركة (سيارات وسكوترات).
         </p>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-border bg-surface">
-        <table className="w-full text-sm">
-          <thead className="bg-background text-muted">
-            <tr>
-              <th className="px-3 py-2 text-start font-medium">الرمز</th>
-              <th className="px-3 py-2 text-start font-medium">الاسم</th>
-              <th className="px-3 py-2 text-start font-medium">الفريق</th>
-              <th className="px-3 py-2 text-start font-medium">كباتن</th>
-              <th className="px-3 py-2 text-start font-medium">الحساب</th>
-            </tr>
-          </thead>
-          <tbody>
-            {supervisors.map((s) => (
-              <tr key={s.id} className="border-t border-border">
-                <td className="px-3 py-2 font-medium" dir="ltr">{s.code}</td>
-                <td className="px-3 py-2" dir="auto">{s.name}</td>
-                <td className="px-3 py-2" dir="ltr">{s.teamName ?? "—"}</td>
-                <td className="px-3 py-2 tabular-nums">{s.captains}</td>
-                <td className="px-3 py-2">
-                  <LinkForm supervisorId={s.id} linkedEmail={s.linkedEmail} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {teams?.map((team) => {
+          const t = tally.get(team.id);
+          return (
+            <div key={team.id} className="rounded-xl border border-border bg-surface p-5">
+              <div className="text-lg font-semibold">فريق {team.name}</div>
+              <div className="mt-1 text-sm text-muted">
+                {t?.active ?? 0} كابتن فعّال
+                {t && t.total !== t.active ? ` من ${t.total}` : ""}
+              </div>
+              {t && t.vehicles.size > 0 && (
+                <ul className="mt-3 flex flex-col gap-1 text-sm">
+                  {[...t.vehicles].map(([vehicle, n]) => (
+                    <li key={vehicle} className="flex justify-between">
+                      <span>{VEHICLE_LABELS[vehicle]}</span>
+                      <span className="tabular-nums text-muted">{n}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
       </div>
+
+      {unassigned > 0 && (
+        <p className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
+          {unassigned} كابتن بلا فريق — راجعهم من صفحة الكباتن.
+        </p>
+      )}
     </div>
   );
 }

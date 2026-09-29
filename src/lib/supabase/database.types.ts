@@ -234,6 +234,7 @@ export type Database = {
           team_leader_name: string | null
           tenant_id: string
           updated_at: string
+          vehicle_type: Database["public"]["Enums"]["vehicle_type"] | null
         }
         Insert: {
           archived_at?: string | null
@@ -256,6 +257,7 @@ export type Database = {
           team_leader_name?: string | null
           tenant_id: string
           updated_at?: string
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"] | null
         }
         Update: {
           archived_at?: string | null
@@ -278,6 +280,7 @@ export type Database = {
           team_leader_name?: string | null
           tenant_id?: string
           updated_at?: string
+          vehicle_type?: Database["public"]["Enums"]["vehicle_type"] | null
         }
         Relationships: [
           {
@@ -300,6 +303,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "supervisors"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "captains_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "day_team_summaries"
+            referencedColumns: ["team_id"]
           },
           {
             foreignKeyName: "captains_team_id_fkey"
@@ -1224,6 +1234,13 @@ export type Database = {
             foreignKeyName: "supervisors_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
+            referencedRelation: "day_team_summaries"
+            referencedColumns: ["team_id"]
+          },
+          {
+            foreignKeyName: "supervisors_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
@@ -1430,6 +1447,43 @@ export type Database = {
           },
         ]
       }
+      day_team_summaries: {
+        Row: {
+          awaiting: number | null
+          cases: number | null
+          collected_total: number | null
+          deposited_total: number | null
+          operating_day_id: string | null
+          overdue: number | null
+          review: number | null
+          team_id: string | null
+          team_name: string | null
+          tenant_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deposit_cases_operating_day_id_fkey"
+            columns: ["operating_day_id"]
+            isOneToOne: false
+            referencedRelation: "operating_day_summaries"
+            referencedColumns: ["operating_day_id"]
+          },
+          {
+            foreignKeyName: "deposit_cases_operating_day_id_fkey"
+            columns: ["operating_day_id"]
+            isOneToOne: false
+            referencedRelation: "operating_days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deposit_cases_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operating_day_summaries: {
         Row: {
           awaiting: number | null
@@ -1561,6 +1615,7 @@ export type Database = {
         | "deposit_evidence"
         | "captain"
         | "import_batch"
+      vehicle_type: "company_car" | "company_scooter"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1771,6 +1826,7 @@ export const Constants = {
         "captain",
         "import_batch",
       ],
+      vehicle_type: ["company_car", "company_scooter"],
     },
   },
 } as const

@@ -7,6 +7,7 @@ import { DepositStatusBadge, type DepositStatus } from "@/components/deposit-sta
 import { formatDateTime, formatMoney, weekdayArabic } from "@/lib/dates";
 import { DepositForm } from "./deposit-form";
 import { NoteForm } from "./note-form";
+import { VEHICLE_LABELS } from "@/components/vehicle";
 
 const PAGE_SIZE = 200;
 
@@ -21,7 +22,7 @@ const TABS: { key: string; label: string; statuses: DepositStatus[] | null }[] =
 
 export default async function DayPage({ params, searchParams }: PageProps<"/days/[date]">) {
   const { date } = await params;
-  const { tab: tabParam, q, page, supervisor: supervisorParam } = await searchParams;
+  const { tab: tabParam, q, page, team: teamParam } = await searchParams;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) notFound();
 
   const ctx = await requireTenant("days.read");
@@ -39,25 +40,21 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
 
   const tab = TABS.find((t) => t.key === tabParam) ?? TABS[0];
   const query = typeof q === "string" ? q.trim() : "";
-  // A supervisor only ever sees their own captains; everyone else can filter freely.
-  const ownSupervisor = ctx.membership.role === "supervisor" ? ctx.membership.supervisor : null;
-  const supervisorCode = ownSupervisor?.code ?? (typeof supervisorParam === "string" ? supervisorParam : "");
+  const teamName = typeof teamParam === "string" ? teamParam : "";
   const pageNumber = Math.max(1, Number(typeof page === "string" ? page : 1) || 1);
 
-  const { data: supervisorRows } = await supabase
-    .from("day_supervisor_summaries")
+  const { data: teamRows } = await supabase
+    .from("day_team_summaries")
     .select("*")
     .eq("operating_day_id", day.operating_day_id!)
-    .order("supervisor_code");
-  const supervisors = supervisorRows ?? [];
-  const selectedSupervisor = supervisors.find((s) => s.supervisor_code === supervisorCode);
-  // Even on a day with no cases yet, the lock must still apply.
-  const lockedSupervisorId = ownSupervisor?.id ?? selectedSupervisor?.supervisor_id ?? null;
+    .order("team_name");
+  const teams = teamRows ?? [];
+  const selectedTeam = teams.find((t) => t.team_name === teamName);
 
   let request = supabase
     .from("deposit_cases")
     .select(
-      "id, status, collected_amount, expected_amount, deposited_amount, withdrawn_amount, allowed_deduction, deduction_rate, completed_deliveries, payment_method, is_late, deposited_at, review_reason, notes, supervisor_note, captain:captains!inner(id, external_user_id, full_name, phone, service_center_name, group_label, supervisor:supervisors(code, name))",
+      "id, status, collected_amount, expected_amount, deposited_amount, withdrawn_amount, allowed_deduction, deduction_rate, completed_deliveries, payment_method, is_late, deposited_at, review_reason, notes, supervisor_note, captain:captains!inner(id, external_user_id, full_name, phone, vehicle_type, team:teams(name))",
       { count: "exact" },
     )
     .eq("operating_day_id", day.operating_day_id!)
@@ -66,8 +63,8 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
     .range((pageNumber - 1) * PAGE_SIZE, pageNumber * PAGE_SIZE - 1);
 
   if (tab.statuses) request = request.in("status", tab.statuses);
-  if (lockedSupervisorId) {
-    request = request.eq("captain.supervisor_id", lockedSupervisorId);
+  if (selectedTeam) {
+    request = request.eq("captain.team_id", selectedTeam.team_id!);
   }
   if (query) {
     request = request.or(
@@ -79,8 +76,8 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
   const { data: cases, count } = await request;
   const total = count ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const hrefFor = (p: number, t = tab.key, sup = supervisorCode) =>
-    `/days/${date}?tab=${t}&q=${encodeURIComponent(query)}&supervisor=${encodeURIComponent(sup)}&page=${p}`;
+  const hrefFor = (p: number, t = tab.key, team = teamName) =>
+    `/days/${date}?tab=${t}&q=${encodeURIComponent(query)}&team=${encodeURIComponent(team)}&page=${p}`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -102,35 +99,27 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
         <Stat label="متأخر / مراجعة" value={`${day.overdue ?? 0} / ${day.review ?? 0}`} />
       </div>
 
-      {ownSupervisor && (
-        <p className="text-sm text-muted">
-          تعرض كباتنك فقط ({ownSupervisor.name}).
-        </p>
-      )}
-
-      {!ownSupervisor && supervisors.length > 0 && (
+      {teams.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <Link
             href={hrefFor(1, tab.key, "")}
             className={`rounded-lg border px-3 py-1.5 text-sm ${
-              supervisorCode ? "border-border hover:bg-surface" : "border-accent bg-surface font-medium"
+              teamName ? "border-border hover:bg-surface" : "border-accent bg-surface font-medium"
             }`}
           >
-            كل المشرفين
+            كل الفرق
           </Link>
-          {supervisors.map((s) => (
+          {teams.map((t) => (
             <Link
-              key={s.supervisor_id}
-              href={hrefFor(1, tab.key, s.supervisor_code!)}
+              key={t.team_id}
+              href={hrefFor(1, tab.key, t.team_name!)}
               className={`rounded-lg border px-3 py-1.5 text-sm ${
-                s.supervisor_code === supervisorCode
-                  ? "border-accent bg-surface font-medium"
-                  : "border-border hover:bg-surface"
+                t.team_name === teamName ? "border-accent bg-surface font-medium" : "border-border hover:bg-surface"
               }`}
             >
-              {s.supervisor_name}
+              فريق {t.team_name}
               <span className="ms-2 text-xs text-muted" dir="ltr">
-                {s.awaiting}/{s.cases}
+                {t.awaiting}/{t.cases}
               </span>
             </Link>
           ))}
@@ -151,7 +140,7 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
         ))}
         <form className="ms-auto flex gap-2">
           <input type="hidden" name="tab" value={tab.key} />
-          <input type="hidden" name="supervisor" value={supervisorCode} />
+          <input type="hidden" name="team" value={teamName} />
           <input
             name="q"
             defaultValue={query}
@@ -192,8 +181,8 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
                       {c.captain.external_user_id} · {c.captain.phone}
                     </div>
                     <div className="text-xs text-muted" dir="auto">
-                      {c.captain.supervisor?.name ?? "بلا مشرف"}
-                      {c.captain.group_label ? ` · ${c.captain.group_label}` : ""}
+                      فريق {c.captain.team?.name ?? "—"}
+                      {c.captain.vehicle_type ? ` · ${VEHICLE_LABELS[c.captain.vehicle_type]}` : ""}
                     </div>
                   </td>
                   <td className="px-3 py-2">

@@ -44,9 +44,13 @@ business row carries `tenant_id` and is protected by RLS.
 - Phones are canonical E.164 (`+9627XXXXXXXX`) via `src/lib/phone.ts` everywhere.
 - Permissions: `src/lib/auth/permissions.ts` (`can(role, permission)`); pages call
   `requireTenant(permission)` from `src/lib/auth/context.ts`.
-- Captains belong to a `supervisors` row (code as in the sheets' `dip.s.c`) and a team
-  (A / B / FDK). `captains.phone` may be NULL when the number belongs to someone else;
-  such rows carry `needs_review`.
+- Captains belong to a team: **A**, **B** or **FDK**. A and B ride their own vehicles;
+  FDK captains ride company vehicles, split by `captains.vehicle_type`
+  (`company_car` / `company_scooter`). The day board and the captains list group by team.
+- The 13 `supervisors` rows imported from Diken are **history only** — that layer no
+  longer exists in the business. Do not build new features on it.
+- `captains.phone` may be NULL when the number belongs to someone else; such rows carry
+  `needs_review`.
 - `public.current_business_date(tenant)` mirrors Diken's `current_work_date()`: before
   `day_start_time` (16:00 Amman) the current business day is still yesterday.
 
