@@ -43,8 +43,14 @@ business row carries `tenant_id` and is protected by RLS.
 - Permissions: `src/lib/auth/permissions.ts` (`can(role, permission)`); pages call
   `requireTenant(permission)` from `src/lib/auth/context.ts`.
 
+## Source of truth for business rules
+The operator's own rules doc (Arabic, Claude Docs — read it with the docs connector,
+never web-fetch): https://claude.ai/code/artifact/19c32bd2-7053-45d0-84b8-50e436a03b8e
+It describes the *current* n8n + Supabase + Sheets system and its recommendations for
+this app. Where this file and that doc disagree, ask the user before changing behaviour.
+
 ## Daily cycle (business rules, confirmed with the operator)
-- Operating day D runs 16:30 on D → 16:30 on D+1 (`tenants.day_start_time`). The morning
+- Operating day D runs 16:00 on D → 16:00 on D+1 (`tenants.day_start_time`). The morning
   COD file is dated D+1 but belongs to D (`suggestCodBusinessDate`).
 - Sources: **COD** `Rider details.xlsx` (authoritative attendance + `collected_amount` =
   `actual_amount`), **Rider** `Rider Performance.xlsx` (`completed_deliveries`, only
