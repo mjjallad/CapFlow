@@ -18,6 +18,9 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
             <Link href="/captains" className="text-sm text-muted hover:text-foreground">
               الكباتن
             </Link>
+            <Link href="/team" className="text-sm text-muted hover:text-foreground">
+              المشرفون
+            </Link>
           </nav>
           <div className="flex items-center gap-3 text-sm">
             <span className="text-muted" dir="ltr">

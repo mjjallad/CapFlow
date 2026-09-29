@@ -39,7 +39,9 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
 
   const tab = TABS.find((t) => t.key === tabParam) ?? TABS[0];
   const query = typeof q === "string" ? q.trim() : "";
-  const supervisorCode = typeof supervisorParam === "string" ? supervisorParam : "";
+  // A supervisor only ever sees their own captains; everyone else can filter freely.
+  const ownSupervisor = ctx.membership.role === "supervisor" ? ctx.membership.supervisor : null;
+  const supervisorCode = ownSupervisor?.code ?? (typeof supervisorParam === "string" ? supervisorParam : "");
   const pageNumber = Math.max(1, Number(typeof page === "string" ? page : 1) || 1);
 
   const { data: supervisorRows } = await supabase
@@ -49,6 +51,8 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
     .order("supervisor_code");
   const supervisors = supervisorRows ?? [];
   const selectedSupervisor = supervisors.find((s) => s.supervisor_code === supervisorCode);
+  // Even on a day with no cases yet, the lock must still apply.
+  const lockedSupervisorId = ownSupervisor?.id ?? selectedSupervisor?.supervisor_id ?? null;
 
   let request = supabase
     .from("deposit_cases")
@@ -62,8 +66,8 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
     .range((pageNumber - 1) * PAGE_SIZE, pageNumber * PAGE_SIZE - 1);
 
   if (tab.statuses) request = request.in("status", tab.statuses);
-  if (selectedSupervisor) {
-    request = request.eq("captain.supervisor_id", selectedSupervisor.supervisor_id!);
+  if (lockedSupervisorId) {
+    request = request.eq("captain.supervisor_id", lockedSupervisorId);
   }
   if (query) {
     request = request.or(
@@ -98,7 +102,13 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
         <Stat label="متأخر / مراجعة" value={`${day.overdue ?? 0} / ${day.review ?? 0}`} />
       </div>
 
-      {supervisors.length > 0 && (
+      {ownSupervisor && (
+        <p className="text-sm text-muted">
+          تعرض كباتنك فقط ({ownSupervisor.name}).
+        </p>
+      )}
+
+      {!ownSupervisor && supervisors.length > 0 && (
         <div className="flex flex-wrap gap-2">
           <Link
             href={hrefFor(1, tab.key, "")}
