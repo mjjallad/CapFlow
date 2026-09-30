@@ -26,6 +26,7 @@ export type CaptainEdit = {
   vehicle_kinds: VehicleKind[];
   whatsapp_group: string | null;
   city_id: string | null;
+  branch_id: string | null;
   status: CaptainStatus;
   deduction_rate: number;
   contract_file_number: string | null;
@@ -128,6 +129,7 @@ export async function updateCaptain(input: {
     vehicle_kinds: input.edit.vehicle_kinds,
     whatsapp_group: clean(input.edit.whatsapp_group),
     city_id: input.edit.city_id,
+    branch_id: input.edit.branch_id,
     status: input.edit.status,
     deduction_rate: input.edit.deduction_rate,
     contract_file_number: clean(input.edit.contract_file_number),

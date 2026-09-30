@@ -44,6 +44,11 @@ business row carries `tenant_id` and is protected by RLS.
 - Phones are canonical E.164 (`+9627XXXXXXXX`) via `src/lib/phone.ts` everywhere.
 - Permissions: `src/lib/auth/permissions.ts` (`can(role, permission)`); pages call
   `requireTenant(permission)` from `src/lib/auth/context.ts`.
+- `branches` holds the activation branches (أبو علندا, شفا بدران, وادي صقرة, الزرقاء);
+  `captains.branch_id` points at one.
+- `/captains/[id]/vehicles/[vehicleId]/print` is the handover sheet: captain, vehicle,
+  condition sketch, damage table and signature lines. `.no-print` hides chrome and
+  `globals.css` flips the tokens to black on white for `@media print`.
 - Captains belong to a team: **A**, **B** or **FDK**. `captains.vehicle_kinds` is a set
   (`own_car`, `own_scooter`, `company_car`, `company_scooter`) because a captain may ride
   more than one. The day board and the captains list group by team.

@@ -212,6 +212,41 @@ export type Database = {
           },
         ]
       }
+      branches: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branches_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       captain_documents: {
         Row: {
           captain_id: string
@@ -280,6 +315,7 @@ export type Database = {
         Row: {
           activated_on: string | null
           archived_at: string | null
+          branch_id: string | null
           city_id: string | null
           contract_file_number: string | null
           created_at: string
@@ -309,6 +345,7 @@ export type Database = {
         Insert: {
           activated_on?: string | null
           archived_at?: string | null
+          branch_id?: string | null
           city_id?: string | null
           contract_file_number?: string | null
           created_at?: string
@@ -338,6 +375,7 @@ export type Database = {
         Update: {
           activated_on?: string | null
           archived_at?: string | null
+          branch_id?: string | null
           city_id?: string | null
           contract_file_number?: string | null
           created_at?: string
@@ -365,6 +403,13 @@ export type Database = {
           whatsapp_group?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "captains_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "captains_city_id_fkey"
             columns: ["city_id"]

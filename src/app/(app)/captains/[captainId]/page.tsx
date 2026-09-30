@@ -27,15 +27,17 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
   const { data: captain } = await supabase
     .from("captains")
     .select(
-      "id, full_name, phone, phone_secondary, external_user_id, national_id, referrers, team_id, vehicle_kinds, whatsapp_group, city_id, status, deduction_rate, contract_file_number, activated_on, notes, photo_path, needs_review, review_note, team:teams(name), city:cities(name)",
+      "id, full_name, phone, phone_secondary, external_user_id, national_id, referrers, team_id, vehicle_kinds, whatsapp_group, city_id, branch_id, status, deduction_rate, contract_file_number, activated_on, notes, photo_path, needs_review, review_note, team:teams(name), city:cities(name), branch:branches(name)",
     )
     .eq("id", captainId)
     .maybeSingle();
   if (!captain) notFound();
 
-  const [{ data: teams }, { data: cities }, photo, documents, vehicles, { data: cases }] = await Promise.all([
+  const [{ data: teams }, { data: cities }, { data: branches }, photo, documents, vehicles, { data: cases }] =
+    await Promise.all([
     supabase.from("teams").select("id, name").eq("is_active", true).order("name"),
     supabase.from("cities").select("id, name").eq("is_active", true).order("name"),
+    supabase.from("branches").select("id, name").eq("is_active", true).order("name"),
     photoUrl(captain.photo_path),
     listDocuments({ tenantId: ctx.tenantId, captainId }),
     listVehicles({ tenantId: ctx.tenantId, captainId }),
@@ -59,6 +61,7 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
     vehicle_kinds: captain.vehicle_kinds ?? [],
     whatsapp_group: captain.whatsapp_group,
     city_id: captain.city_id,
+    branch_id: captain.branch_id,
     status: captain.status,
     deduction_rate: captain.deduction_rate,
     contract_file_number: captain.contract_file_number,
@@ -105,6 +108,7 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
             <Row label="الفريق" value={captain.team?.name ? `فريق ${captain.team.name}` : null} />
             <Row label="مجموعة واتساب" value={captain.whatsapp_group} />
             <Row label="المدينة" value={captain.city?.name ?? null} />
+            <Row label="فرع التفعيل" value={captain.branch?.name ?? null} />
             <Row label="المركبات" value={vehicleSummary(captain.vehicle_kinds)} />
             <Row label="تاريخ التفعيل" value={captain.activated_on} ltr />
             <Row label="رقم ملف العقد" value={captain.contract_file_number} ltr />
@@ -125,7 +129,13 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
         </div>
       </div>
 
-      <CaptainEditForm captain={fields} teams={teams ?? []} cities={cities ?? []} readOnly={!canManage} />
+      <CaptainEditForm
+        captain={fields}
+        teams={teams ?? []}
+        cities={cities ?? []}
+        branches={branches ?? []}
+        readOnly={!canManage}
+      />
 
       {(captain.vehicle_kinds ?? []).some((k) => k === "company_car" || k === "company_scooter") && (
         <CaptainVehicles captainId={captain.id} vehicles={vehicles} readOnly={!canManage} outlineUrls={sketchOutlineUrls()} />

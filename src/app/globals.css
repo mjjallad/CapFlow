@@ -41,3 +41,28 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+@media print {
+  /* Only the sheet itself goes on paper. */
+  .no-print {
+    display: none !important;
+  }
+
+  :root {
+    --background: #ffffff;
+    --foreground: #000000;
+    --surface: #ffffff;
+    --border: #999999;
+    --muted: #444444;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .print-sheet {
+    max-width: none;
+    padding: 0;
+  }
+}

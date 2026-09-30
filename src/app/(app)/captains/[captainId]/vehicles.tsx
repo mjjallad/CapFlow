@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { removeVehicle, saveVehicleAction, type VehicleState } from "./actions";
+import Link from "next/link";
 import { VEHICLE_LABELS, type VehicleKind } from "@/components/vehicle";
 import { DamageSketch } from "./damage-sketch";
 import type { DamageMark } from "@/components/damage";
@@ -196,6 +197,14 @@ function VehicleForm({
           >
             {pending ? "جارٍ الحفظ…" : vehicle ? "حفظ" : "إضافة"}
           </button>
+          {vehicle && (
+            <Link
+              href={`/captains/${captainId}/vehicles/${vehicle.id}/print`}
+              className="rounded-md border border-border px-3 py-2 text-sm hover:bg-background"
+            >
+              طباعة نموذج التسليم
+            </Link>
+          )}
           {vehicle ? <DeleteButton vehicleId={vehicle.id} /> : (
             <button type="button" onClick={onCancel} className="text-sm text-muted hover:text-foreground">
               إلغاء

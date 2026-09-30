@@ -19,6 +19,7 @@ export type CaptainFields = {
   vehicle_kinds: VehicleKind[];
   whatsapp_group: string | null;
   city_id: string | null;
+  branch_id: string | null;
   status: "active" | "inactive" | "suspended";
   deduction_rate: number;
   contract_file_number: string | null;
@@ -35,11 +36,13 @@ export function CaptainEditForm({
   captain,
   teams,
   cities,
+  branches,
   readOnly,
 }: {
   captain: CaptainFields;
   teams: Option[];
   cities: Option[];
+  branches: Option[];
   readOnly: boolean;
 }) {
   const [state, action, pending] = useActionState<SaveState, FormData>(saveCaptain, {});
@@ -140,6 +143,16 @@ export function CaptainEditForm({
             {teams.map((t) => (
               <option key={t.id} value={t.id}>
                 فريق {t.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="فرع التفعيل">
+          <select name="branch_id" defaultValue={captain.branch_id ?? ""} disabled={readOnly} className={inputClass}>
+            <option value="">—</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
               </option>
             ))}
           </select>

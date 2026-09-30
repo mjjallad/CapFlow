@@ -80,6 +80,7 @@ export async function saveCaptain(_prev: SaveState, formData: FormData): Promise
         vehicle_kinds: vehicleKinds,
         whatsapp_group: text("whatsapp_group"),
         city_id: text("city_id"),
+        branch_id: text("branch_id"),
         status: STATUSES.includes(statusRaw as CaptainStatus) ? (statusRaw as CaptainStatus) : "active",
         deduction_rate: rate,
         contract_file_number: text("contract_file_number"),

@@ -6,7 +6,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
 
   return (
     <>
-      <header className="border-b border-border bg-surface">
+      <header className="no-print border-b border-border bg-surface">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
           <nav className="flex items-center gap-5">
             <Link href="/" className="font-semibold">
