@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { saveCaptain, type SaveState } from "./actions";
 import { VEHICLE_LABELS, VEHICLE_ORDER, type VehicleKind } from "@/components/vehicle";
+import { DateField } from "@/components/date-field";
 
 type Option = { id: string; name: string };
 type Referrer = { name: string; national_id: string; phone: string };
@@ -196,15 +197,8 @@ export function CaptainEditForm({
             ))}
           </select>
         </Field>
-        <Field label="تاريخ التفعيل" hint="يوم/شهر/سنة">
-          <input
-            name="activated_on"
-            type="date"
-            defaultValue={captain.activated_on ?? ""}
-            disabled={readOnly}
-            className={inputClass}
-            dir="ltr"
-          />
+        <Field label="تاريخ التفعيل">
+          <DateField name="activated_on" defaultValue={captain.activated_on} disabled={readOnly} />
         </Field>
         <Field label="مجموعة واتساب">
           <input name="whatsapp_group" defaultValue={captain.whatsapp_group ?? ""} disabled={readOnly} className={inputClass} dir="auto" />

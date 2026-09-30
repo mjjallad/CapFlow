@@ -6,6 +6,7 @@ import Link from "next/link";
 import { VEHICLE_LABELS, type VehicleKind } from "@/components/vehicle";
 import { DamageSketch } from "./damage-sketch";
 import type { DamageMark } from "@/components/damage";
+import { DateField } from "@/components/date-field";
 
 export type VehicleRow = {
   id: string;
@@ -149,25 +150,11 @@ function VehicleForm({
             dir="ltr"
           />
         </Field>
-        <Field label="تاريخ الاستلام" hint="يوم/شهر/سنة">
-          <input
-            name="received_on"
-            type="date"
-            defaultValue={vehicle?.received_on ?? ""}
-            disabled={readOnly}
-            className={inputClass}
-            dir="ltr"
-          />
+        <Field label="تاريخ الاستلام">
+          <DateField name="received_on" defaultValue={vehicle?.received_on} disabled={readOnly} />
         </Field>
-        <Field label="تاريخ الكشف" hint="يوم/شهر/سنة">
-          <input
-            name="inspected_on"
-            type="date"
-            defaultValue={vehicle?.inspected_on ?? ""}
-            disabled={readOnly}
-            className={inputClass}
-            dir="ltr"
-          />
+        <Field label="تاريخ الكشف">
+          <DateField name="inspected_on" defaultValue={vehicle?.inspected_on} disabled={readOnly} />
         </Field>
         <div className="sm:col-span-2">
           <Field label="ملاحظات المركبة">

@@ -44,6 +44,10 @@ business row carries `tenant_id` and is protected by RLS.
 - Phones are canonical E.164 (`+9627XXXXXXXX`) via `src/lib/phone.ts` everywhere.
 - Permissions: `src/lib/auth/permissions.ts` (`can(role, permission)`); pages call
   `requireTenant(permission)` from `src/lib/auth/context.ts`.
+- Dates are written with `src/components/date-field.tsx` (three boxes: day / month /
+  year, left to right, so read right to left it is year, month, day) and displayed with
+  `formatDay` as dd/mm/yyyy. The native `<input type="date">` is not used: its format
+  follows the viewer's operating system.
 - `branches` holds the activation branches (أبو علندا, شفا بدران, وادي صقرة, الزرقاء);
   `captains.branch_id` points at one.
 - `/captains/[id]/vehicles/[vehicleId]/print` is the handover sheet: captain, vehicle,
