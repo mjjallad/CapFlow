@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useActionState } from "react";
+import { advanceOnEnter } from "@/components/form-nav";
 import { removeCaptainDocument, uploadCaptainDocument, type DocumentState } from "./actions";
 import { DOCUMENT_LABELS, type DocumentKind } from "@/components/vehicle";
 
@@ -76,7 +77,11 @@ export function CaptainDocuments({
       )}
 
       {!readOnly && (
-        <form action={action} className="flex flex-wrap items-end gap-2 border-t border-border pt-4 text-sm">
+        <form
+          action={action}
+          onKeyDown={advanceOnEnter}
+          className="flex flex-wrap items-end gap-2 border-t border-border pt-4 text-sm"
+        >
           <input type="hidden" name="captainId" value={captainId} />
           <label className="flex flex-col gap-1">
             <span className="text-xs text-muted">النوع</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { advanceOnEnter } from "@/components/form-nav";
 import { submitDeposit, type DepositFormState } from "./actions";
 
 export function DepositForm({
@@ -38,7 +39,7 @@ export function DepositForm({
   }
 
   return (
-    <form action={action} className="flex flex-wrap items-end gap-2 text-xs">
+    <form action={action} onKeyDown={advanceOnEnter} className="flex flex-wrap items-end gap-2 text-xs">
       <input type="hidden" name="caseId" value={caseId} />
       <input type="hidden" name="businessDate" value={businessDate} />
       <label className="flex flex-col gap-0.5">

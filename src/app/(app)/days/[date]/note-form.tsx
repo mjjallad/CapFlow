@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { advanceOnEnter } from "@/components/form-nav";
 import { submitSupervisorNote, type NoteState } from "./actions";
 
 export function NoteForm({
@@ -15,7 +16,7 @@ export function NoteForm({
   const [state, action, pending] = useActionState<NoteState, FormData>(submitSupervisorNote, {});
 
   return (
-    <form action={action} className="flex items-center gap-1">
+    <form action={action} onKeyDown={advanceOnEnter} className="flex items-center gap-1">
       <input type="hidden" name="caseId" value={caseId} />
       <input type="hidden" name="businessDate" value={businessDate} />
       <input

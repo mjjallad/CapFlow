@@ -49,8 +49,9 @@ business row carries `tenant_id` and is protected by RLS.
   `formatDay` as dd/mm/yyyy. The native `<input type="date">` is not used for typing —
   its format follows the viewer's operating system — but a calendar button opens it via
   `showPicker()` and copies the choice into the three boxes.
-- Forms attach `advanceOnEnter` from `src/components/form-nav.ts`: Enter moves to the
-  next field and submits from the last one, while a textarea keeps Enter for newlines.
+- Every data-entry form attaches `advanceOnEnter` from `src/components/form-nav.ts`:
+  Enter moves to the next field and submits from the last one, while a textarea keeps
+  Enter for newlines. Search forms deliberately do not, so Enter searches straight away.
 - `branches` holds the activation branches (أبو علندا, شفا بدران, وادي صقرة, الزرقاء);
   `captains.branch_id` points at one.
 - `/captains/[id]/vehicles/[vehicleId]/print` is the handover sheet: captain, vehicle,

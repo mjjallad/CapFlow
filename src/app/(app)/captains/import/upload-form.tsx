@@ -1,13 +1,14 @@
 "use client";
 
 import { useActionState } from "react";
+import { advanceOnEnter } from "@/components/form-nav";
 import { uploadCaptainsFile, type UploadState } from "./actions";
 
 export function UploadForm() {
   const [state, action, pending] = useActionState<UploadState, FormData>(uploadCaptainsFile, {});
 
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form action={action} onKeyDown={advanceOnEnter} className="flex flex-col gap-4">
       <label className="flex flex-col gap-1.5 text-sm">
         <span className="font-medium">ملف الكباتن (Excel)</span>
         <input

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { advanceOnEnter } from "@/components/form-nav";
 import { uploadDailyFile, type DailyUploadState } from "./actions";
 
 const KINDS = [
@@ -13,7 +14,7 @@ export function DailyUploadForm({ defaultDate }: { defaultDate: string }) {
   const [kind, setKind] = useState<(typeof KINDS)[number]["value"]>("cod");
 
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form action={action} onKeyDown={advanceOnEnter} className="flex flex-col gap-4">
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">نوع الملف</legend>
         {KINDS.map((k) => (
