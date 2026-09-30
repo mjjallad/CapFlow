@@ -33,7 +33,17 @@ export type CaptainEdit = {
   contract_file_number: string | null;
   activated_on: string | null;
   notes: string | null;
+  /** Required when the captain is moving off a company vehicle. */
+  company_vehicle_returned_on: string | null;
 };
+
+/** Thrown when a company vehicle is being dropped without saying when it came back. */
+export class ReturnDateRequired extends Error {
+  constructor(public readonly kinds: VehicleKind[]) {
+    super("تاريخ تسليم مركبة الشركة مطلوب");
+    this.name = "ReturnDateRequired";
+  }
+}
 
 export type CaptainDocument = {
   id: string;
@@ -78,6 +88,10 @@ export async function listDocuments(input: { tenantId: string; captainId: string
       url: await signedUrl(DOCUMENT_BUCKET, d.storage_path),
     })),
   );
+}
+
+function isCompanyKind(kind: VehicleKind): boolean {
+  return kind === "company_car" || kind === "company_scooter";
 }
 
 function clean(value: string | null | undefined): string | null {
@@ -144,6 +158,15 @@ export async function updateCaptain(input: {
 
   if (!patch.full_name) throw new Error("الاسم مطلوب");
 
+  // Moving off a company vehicle has to say when it was handed back, and the
+  // vehicle is released rather than deleted so its history survives.
+  const droppedCompanyKinds = (before.vehicle_kinds ?? []).filter(
+    (kind) => isCompanyKind(kind) && !input.edit.vehicle_kinds.includes(kind),
+  );
+  if (droppedCompanyKinds.length > 0 && !input.edit.company_vehicle_returned_on) {
+    throw new ReturnDateRequired(droppedCompanyKinds);
+  }
+
   const { error } = await admin.from("captains").update(patch).eq("id", input.captainId);
   if (error) {
     if (error.code === "23505") throw new Error("رقم الهاتف أو المعرّف مستخدم لكابتن آخر");
@@ -155,6 +178,28 @@ export async function updateCaptain(input: {
   const changed = Object.fromEntries(
     Object.entries(patch).filter(([key, value]) => JSON.stringify(previous[key]) !== JSON.stringify(value)),
   ) as Record<string, Json>;
+
+  if (droppedCompanyKinds.length > 0) {
+    const returnedOn = input.edit.company_vehicle_returned_on!;
+    const { error: releaseError } = await admin
+      .from("vehicles")
+      .update({ captain_id: null, returned_on: returnedOn })
+      .eq("tenant_id", input.tenantId)
+      .eq("captain_id", input.captainId)
+      .in("kind", droppedCompanyKinds);
+    if (releaseError) throw new Error(`تعذّر تسليم المركبة: ${releaseError.message}`);
+
+    await admin.from("audit_logs").insert({
+      tenant_id: input.tenantId,
+      actor_user_id: input.userId,
+      action: "vehicle.returned",
+      module: "captains",
+      operation_context: "dashboard",
+      entity_type: "captain",
+      entity_id: input.captainId,
+      after_data: { kinds: droppedCompanyKinds, returned_on: returnedOn },
+    });
+  }
 
   if (Object.keys(changed).length) {
     await admin.from("audit_logs").insert({

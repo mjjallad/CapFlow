@@ -52,6 +52,9 @@ business row carries `tenant_id` and is protected by RLS.
 - Every data-entry form attaches `advanceOnEnter` from `src/components/form-nav.ts`:
   Enter moves to the next field and submits from the last one, while a textarea keeps
   Enter for newlines. Search forms deliberately do not, so Enter searches straight away.
+- Captain search goes through `captainSearchFilter` (`src/lib/captains/search.ts`): name,
+  both phone numbers and the platform id, plus the canonical form of a typed phone so
+  `0791234567` finds `+962791234567`.
 - `branches` holds the activation branches (أبو علندا, شفا بدران, وادي صقرة, الزرقاء);
   `captains.branch_id` points at one.
 - `/captains/[id]/vehicles/[vehicleId]/print` is the handover sheet: captain, vehicle,
@@ -69,6 +72,9 @@ business row carries `tenant_id` and is protected by RLS.
   `captain_documents` + the private `captain-documents` bucket. Company cars and
   scooters are rows in `vehicles` (model, plate, year, colour, odometer, handover date,
   notes) and the section only appears once the captain has a `company_*` vehicle kind.
+  Taking a `company_*` kind off a captain requires a handover date: the form warns, the
+  date is required, and the vehicle is released (`captain_id` null, `returned_on` set)
+  rather than deleted, so its plate, odometer and sketch stay in the fleet.
   Each vehicle also carries a pre-handover condition sketch: `vehicles.damage_marks` holds
   `{x, y, kind, note}` points as a share (0–1) of the outline drawing, so they stay correct
   at any size. The damage vocabulary lives in `src/components/damage.ts`. Dropping

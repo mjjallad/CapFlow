@@ -52,6 +52,13 @@ export function CaptainEditForm({
   const [state, action, pending] = useActionState<SaveState, FormData>(saveCaptain, {});
   const [referrers, setReferrers] = useState<Referrer[]>(captain.referrers);
   const [mode, setMode] = useState<DeductionMode>(captain.deduction_mode);
+  const [kinds, setKinds] = useState<VehicleKind[]>(captain.vehicle_kinds);
+
+  // Company vehicles the captain holds today but is being moved off.
+  const dropped = captain.vehicle_kinds.filter(
+    (kind) => (kind === "company_car" || kind === "company_scooter") && !kinds.includes(kind),
+  );
+  const askForReturnDate = dropped.length > 0 || (state.needsReturnDate?.length ?? 0) > 0;
 
   const updateReferrer = (index: number, patch: Partial<Referrer>) =>
     setReferrers((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -182,7 +189,12 @@ export function CaptainEditForm({
                   type="checkbox"
                   name="vehicle_kinds"
                   value={kind}
-                  defaultChecked={captain.vehicle_kinds.includes(kind)}
+                  checked={kinds.includes(kind)}
+                  onChange={(e) =>
+                    setKinds((current) =>
+                      e.target.checked ? [...current, kind] : current.filter((k) => k !== kind),
+                    )
+                  }
                   disabled={readOnly}
                 />
                 {VEHICLE_LABELS[kind]}
@@ -190,6 +202,21 @@ export function CaptainEditForm({
             ))}
           </div>
           <p className="mt-1 text-xs text-muted">اختر أكثر من واحدة إذا كان يعمل على أكثر من مركبة.</p>
+
+          {askForReturnDate && (
+            <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:border-amber-900 dark:bg-amber-950/40">
+              <p className="mb-2 font-medium text-amber-900 dark:text-amber-200">
+                الكابتن يترك {(dropped.length ? dropped.map((k) => VEHICLE_LABELS[k]) : state.needsReturnDate ?? []).join(" و")}
+                . أدخل تاريخ تسليمها قبل الحفظ.
+              </p>
+              <div className="max-w-56">
+                <DateField name="company_vehicle_returned_on" disabled={readOnly} />
+              </div>
+              <p className="mt-2 text-xs text-amber-900/80 dark:text-amber-200/80">
+                تبقى المركبة مسجّلة بلوحتها وعدادها وكروكي أضرارها، وتصبح غير مسنَدة لأحد.
+              </p>
+            </div>
+          )}
         </div>
 
         <Field label="الحالة">

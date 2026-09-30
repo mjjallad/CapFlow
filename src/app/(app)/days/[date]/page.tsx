@@ -9,6 +9,7 @@ import { DepositForm } from "./deposit-form";
 import { NoteForm } from "./note-form";
 import { vehicleSummary } from "@/components/vehicle";
 import { DEDUCTION_SHORT } from "@/components/deduction";
+import { captainSearchFilter } from "@/lib/captains/search";
 
 const PAGE_SIZE = 200;
 
@@ -67,12 +68,7 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
   if (selectedTeam) {
     request = request.eq("captain.team_id", selectedTeam.team_id!);
   }
-  if (query) {
-    request = request.or(
-      `full_name.ilike.%${query}%,phone.ilike.%${query}%,external_user_id.ilike.%${query}%`,
-      { referencedTable: "captains" },
-    );
-  }
+  if (query) request = request.or(captainSearchFilter(query), { referencedTable: "captains" });
 
   const { data: cases, count } = await request;
   const total = count ?? 0;

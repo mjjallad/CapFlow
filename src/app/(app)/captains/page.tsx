@@ -3,6 +3,7 @@ import { requireTenant } from "@/lib/auth/context";
 import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { vehicleSummary } from "@/components/vehicle";
+import { captainSearchFilter } from "@/lib/captains/search";
 
 const STATUS_LABELS = { active: "نشط", inactive: "غير نشط", suspended: "موقوف" } as const;
 const PAGE_SIZE = 100;
@@ -29,9 +30,7 @@ export default async function CaptainsPage({ searchParams }: PageProps<"/captain
     .range((pageNumber - 1) * PAGE_SIZE, pageNumber * PAGE_SIZE - 1);
 
   if (selected) request = request.eq("team_id", selected.id);
-  if (query) {
-    request = request.or(`full_name.ilike.%${query}%,phone.ilike.%${query}%,external_user_id.ilike.%${query}%`);
-  }
+  if (query) request = request.or(captainSearchFilter(query));
 
   const { data: captains, count } = await request;
   const total = count ?? 0;

@@ -1476,6 +1476,7 @@ export type Database = {
           odometer_km: number | null
           plate_number: string | null
           received_on: string | null
+          returned_on: string | null
           tenant_id: string
           updated_at: string
         }
@@ -1493,6 +1494,7 @@ export type Database = {
           odometer_km?: number | null
           plate_number?: string | null
           received_on?: string | null
+          returned_on?: string | null
           tenant_id: string
           updated_at?: string
         }
@@ -1510,6 +1512,7 @@ export type Database = {
           odometer_km?: number | null
           plate_number?: string | null
           received_on?: string | null
+          returned_on?: string | null
           tenant_id?: string
           updated_at?: string
         }

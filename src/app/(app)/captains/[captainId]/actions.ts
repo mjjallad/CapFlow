@@ -7,11 +7,13 @@ import {
   deleteCaptainDocument,
   setCaptainPhoto,
   updateCaptain,
+  ReturnDateRequired,
   type Referrer,
 } from "@/lib/captains/service";
 import { deleteVehicle, saveVehicle } from "@/lib/captains/vehicles";
 import { isDamageKind, type DamageMark } from "@/components/damage";
 import { isDeductionMode } from "@/components/deduction";
+import { VEHICLE_LABELS } from "@/components/vehicle";
 import type { Database } from "@/lib/supabase/database.types";
 
 type CaptainStatus = Database["public"]["Enums"]["captain_status"];
@@ -25,7 +27,12 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 const MAX_DOCUMENT_BYTES = 10 * 1024 * 1024;
 const DOCUMENT_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
-export type SaveState = { error?: string; saved?: boolean };
+export type SaveState = {
+  error?: string;
+  saved?: boolean;
+  /** Names of the company vehicles whose handover date the form must ask for. */
+  needsReturnDate?: string[];
+};
 
 /** The referrer rows travel as JSON from the client component. */
 function parseReferrers(raw: string): Referrer[] {
@@ -66,6 +73,9 @@ export async function saveCaptain(_prev: SaveState, formData: FormData): Promise
   const activatedOn = text("activated_on");
   if (activatedOn && !/^\d{4}-\d{2}-\d{2}$/.test(activatedOn)) return { error: "تاريخ التفعيل غير صالح." };
 
+  const returnedOn = text("company_vehicle_returned_on");
+  if (returnedOn && !/^\d{4}-\d{2}-\d{2}$/.test(returnedOn)) return { error: "تاريخ تسليم المركبة غير صالح." };
+
   try {
     await updateCaptain({
       tenantId: ctx.tenantId,
@@ -89,12 +99,16 @@ export async function saveCaptain(_prev: SaveState, formData: FormData): Promise
         contract_file_number: text("contract_file_number"),
         activated_on: activatedOn,
         notes: text("notes"),
+        company_vehicle_returned_on: returnedOn,
       },
     });
     revalidatePath(`/captains/${captainId}`);
     revalidatePath("/captains");
     return { saved: true };
   } catch (err) {
+    if (err instanceof ReturnDateRequired) {
+      return { needsReturnDate: err.kinds.map((kind) => VEHICLE_LABELS[kind]) };
+    }
     return { error: err instanceof Error ? err.message : "تعذّر الحفظ." };
   }
 }
