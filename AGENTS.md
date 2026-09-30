@@ -89,12 +89,14 @@ business row carries `tenant_id` and is protected by RLS.
   `day_start_time` (16:00 Amman) the current business day is still yesterday.
 
 ## Working agreement
-Everything in `deposit_cases`, `cod_records`, `attendance_records`, `deposit_events`
-and `import_batches` today is **test data** from trial imports (business date
-2026-09-17). We keep building and refining until the user calls "phase zero"; only
-when the user explicitly asks do we wipe those tables and start recording real days.
-Never delete operational data before that word comes. The captain roster, supervisors
-and teams are real and stay.
+The trial imports were wiped on 2026-09-30 at the user's request: `deposit_cases`,
+`deposit_events`, `cod_records`, `attendance_records`, `import_rows`, `import_batches`,
+`operating_days`, `vehicles` and the `imports` bucket are empty, and real days start
+from here. The roster (captains, teams, branches, cities), the accounts and
+`audit_logs` were kept — the audit trail is never deleted.
+
+Operating data is the user's to wipe, never Claude's initiative: ask, name exactly
+what goes and what stays, and wait for the word.
 
 ## Legacy Diken project (read-only)
 The live system runs on a separate Supabase project **diken** (`debozlnlomrehhamokkh`,
