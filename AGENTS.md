@@ -125,11 +125,17 @@ Anyone absent from COD is off (مجاز) as far as COD is concerned.
   case with `collected_amount` 0, `payment_method` visa, already matched.
 
 Only `Working Days = 1` rows are staged, and a blank delivery count means the rider
-logged in and delivered nothing, so it reads as zero. The file has no date column —
-`suggestRiderBusinessDate` takes the timestamp from its filename and subtracts a day,
-and its `Days since last Shift` column is surfaced when the suggestion is questioned.
-The night Review CSV is not imported (COD supersedes it). The captain's own deposit is
-the third source (manual now, WhatsApp later).
+logged in and delivered nothing, so it reads as zero. The file has no date column, so
+`suggestRiderBusinessDate` places it from the pull timestamp in its filename minus the
+platform's own `Days since last Shift` (pulled on the 30th, last shift 2 days ago → the
+28th). COD places itself from its `Date` column minus one.
+
+### The day's timeline (Amman)
+| ~00:00 | **الريفيو** — first, rough list of who worked. Not imported yet. |
+| 08:00–09:30 | **COD** — corrects the Review and fixes each captain as مداوم or مجاز |
+| 13:30 | **Rider Performance** — order counts, and flips a COD مجاز with orders to مداوم/فيزا |
+
+The captain's own deposit is the third source (manual now, WhatsApp later).
 - `captains.deduction_mode` is the agreement, snapshotted onto each case:
   `none` (hands in everything), `per_order` (keeps `deduction_rate` × delivered orders),
   `payouts` (keeps what the app owes him that day — the supervisor types the amount when

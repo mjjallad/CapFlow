@@ -60,19 +60,26 @@ export async function stageCodImport(input: { tenantId: string; userId: string; 
 }
 
 /**
- * The Rider report is pulled the day after the shift, so the business date is
- * the day before the timestamp in its filename. Returns null when the name
- * carries no timestamp.
+ * The Rider report carries no date column, so two signals place it: the pull
+ * timestamp in its filename, and the platform's own "Days since last Shift".
+ * The platform's count wins when present — a report pulled on the 30th saying
+ * the last shift was 2 days ago belongs to the 28th, not the 29th.
  */
-export function suggestRiderBusinessDate(fileName: string): string | null {
-  const pulled = pullDateFromFilename(fileName);
-  return pulled ? shiftIsoDate(pulled, -1) : null;
-}
-
-/** What the Rider file itself says about how far back the shift was. */
-export async function readRiderShiftAge(file: File): Promise<number | null> {
+export async function suggestRiderBusinessDate(file: File): Promise<{
+  businessDate: string | null;
+  pulledOn: string | null;
+  daysSinceLastShift: number | null;
+}> {
+  const pulledOn = pullDateFromFilename(file.name);
   const sheet = await readFirstSheet(await file.arrayBuffer());
-  return parseRiderRows(sheet.headers, sheet.rows).daysSinceLastShift;
+  const { daysSinceLastShift } = parseRiderRows(sheet.headers, sheet.rows);
+
+  const back = daysSinceLastShift && daysSinceLastShift > 0 ? daysSinceLastShift : 1;
+  return {
+    businessDate: pulledOn ? shiftIsoDate(pulledOn, -back) : null,
+    pulledOn,
+    daysSinceLastShift,
+  };
 }
 
 export async function stageRiderImport(input: { tenantId: string; userId: string; file: File; businessDate: string }) {
