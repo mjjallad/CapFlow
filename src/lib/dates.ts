@@ -25,6 +25,18 @@ export function formatDateTime(iso: string | null | undefined, timeZone: string)
   }).format(new Date(iso));
 }
 
+/**
+ * A calendar date for reading, as dd/mm/yyyy — right to left that is year,
+ * month, day. Parsed from the parts so no timezone can shift the day.
+ */
+export function formatDay(isoDate: string | null | undefined): string {
+  if (!isoDate) return "—";
+  const match = isoDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return isoDate;
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+}
+
 const WEEKDAYS_AR = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 export function weekdayArabic(isoDate: string): string {

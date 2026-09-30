@@ -5,6 +5,7 @@ import { sketchOutlineUrls } from "@/lib/captains/sketch";
 import { DamagePins, VehicleOutline } from "@/components/vehicle-outline";
 import { DAMAGE_COLORS, DAMAGE_LABELS, type DamageMark } from "@/components/damage";
 import { VEHICLE_LABELS } from "@/components/vehicle";
+import { formatDay } from "@/lib/dates";
 import { PrintButton } from "./print-button";
 
 export default async function VehicleHandoverPage({
@@ -76,8 +77,8 @@ export default async function VehicleHandoverPage({
           <Row label="سنة الصنع" value={vehicle.made_year ? String(vehicle.made_year) : null} ltr />
           <Row label="اللون" value={vehicle.color} />
           <Row label="عداد المشي" value={vehicle.odometer_km ? `${vehicle.odometer_km.toLocaleString("en-US")} كم` : null} ltr />
-          <Row label="تاريخ الاستلام" value={vehicle.received_on} ltr />
-          <Row label="تاريخ الكشف" value={vehicle.inspected_on} ltr />
+          <Row label="تاريخ الاستلام" value={formatDay(vehicle.received_on)} ltr />
+          <Row label="تاريخ الكشف" value={formatDay(vehicle.inspected_on)} ltr />
         </dl>
         {vehicle.notes && <p className="mt-2 text-sm">ملاحظات: {vehicle.notes}</p>}
       </section>

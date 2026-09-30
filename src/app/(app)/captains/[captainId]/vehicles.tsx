@@ -149,7 +149,7 @@ function VehicleForm({
             dir="ltr"
           />
         </Field>
-        <Field label="تاريخ الاستلام">
+        <Field label="تاريخ الاستلام" hint="يوم/شهر/سنة">
           <input
             name="received_on"
             type="date"
@@ -159,7 +159,7 @@ function VehicleForm({
             dir="ltr"
           />
         </Field>
-        <Field label="تاريخ الكشف">
+        <Field label="تاريخ الكشف" hint="يوم/شهر/سنة">
           <input
             name="inspected_on"
             type="date"

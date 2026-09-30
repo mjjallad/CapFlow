@@ -196,7 +196,7 @@ export function CaptainEditForm({
             ))}
           </select>
         </Field>
-        <Field label="تاريخ التفعيل">
+        <Field label="تاريخ التفعيل" hint="يوم/شهر/سنة">
           <input
             name="activated_on"
             type="date"

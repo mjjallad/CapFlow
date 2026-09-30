@@ -6,7 +6,7 @@ import { can } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { listDocuments, photoUrl, type Referrer } from "@/lib/captains/service";
 import { DepositStatusBadge } from "@/components/deposit-status";
-import { formatMoney, weekdayArabic } from "@/lib/dates";
+import { formatDay, formatMoney, weekdayArabic } from "@/lib/dates";
 import { CaptainEditForm, type CaptainFields } from "./edit-form";
 import { PhotoForm } from "./photo-form";
 import { CaptainDocuments } from "./documents";
@@ -110,7 +110,7 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
             <Row label="المدينة" value={captain.city?.name ?? null} />
             <Row label="فرع التفعيل" value={captain.branch?.name ?? null} />
             <Row label="المركبات" value={vehicleSummary(captain.vehicle_kinds)} />
-            <Row label="تاريخ التفعيل" value={captain.activated_on} ltr />
+            <Row label="تاريخ التفعيل" value={formatDay(captain.activated_on)} ltr />
             <Row label="رقم ملف العقد" value={captain.contract_file_number} ltr />
             {((captain.referrers ?? []) as unknown as Referrer[]).map((r, i) => (
               <Row
