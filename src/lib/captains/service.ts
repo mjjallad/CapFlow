@@ -13,7 +13,7 @@ const DOCUMENT_BUCKET = "captain-documents";
 const SIGNED_URL_TTL = 60 * 10; // seconds
 
 /** A person who vouches for the captain: their name, ID number and phone. */
-export type Referrer = { name: string; national_id: string; phone: string };
+export type Referrer = { name: string; relation: string; phone: string };
 
 export type CaptainEdit = {
   full_name: string;
@@ -29,6 +29,7 @@ export type CaptainEdit = {
   branch_id: string | null;
   status: CaptainStatus;
   deduction_rate: number;
+  deduction_mode: Database["public"]["Enums"]["deduction_mode"];
   contract_file_number: string | null;
   activated_on: string | null;
   notes: string | null;
@@ -113,10 +114,10 @@ export async function updateCaptain(input: {
   const referrers = input.edit.referrers
     .map((r) => ({
       name: r.name.trim(),
-      national_id: r.national_id.trim(),
+      relation: r.relation.trim(),
       phone: normalizeJordanPhone(r.phone) ?? r.phone.trim(),
     }))
-    .filter((r) => r.name || r.national_id || r.phone);
+    .filter((r) => r.name || r.relation || r.phone);
 
   const patch = {
     full_name: input.edit.full_name.trim(),
@@ -131,7 +132,8 @@ export async function updateCaptain(input: {
     city_id: input.edit.city_id,
     branch_id: input.edit.branch_id,
     status: input.edit.status,
-    deduction_rate: input.edit.deduction_rate,
+    deduction_rate: input.edit.deduction_mode === "per_order" ? input.edit.deduction_rate : 0,
+    deduction_mode: input.edit.deduction_mode,
     contract_file_number: clean(input.edit.contract_file_number),
     activated_on: clean(input.edit.activated_on),
     notes: clean(input.edit.notes),

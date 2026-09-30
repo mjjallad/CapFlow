@@ -14,6 +14,7 @@ import { CaptainVehicles } from "./vehicles";
 import { listVehicles } from "@/lib/captains/vehicles";
 import { sketchOutlineUrls } from "@/lib/captains/sketch";
 import { vehicleSummary } from "@/components/vehicle";
+import { DEDUCTION_SHORT } from "@/components/deduction";
 
 const RECENT_DAYS = 14;
 
@@ -27,7 +28,7 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
   const { data: captain } = await supabase
     .from("captains")
     .select(
-      "id, full_name, phone, phone_secondary, external_user_id, national_id, referrers, team_id, vehicle_kinds, whatsapp_group, city_id, branch_id, status, deduction_rate, contract_file_number, activated_on, notes, photo_path, needs_review, review_note, team:teams(name), city:cities(name), branch:branches(name)",
+      "id, full_name, phone, phone_secondary, external_user_id, national_id, referrers, team_id, vehicle_kinds, whatsapp_group, city_id, branch_id, status, deduction_rate, deduction_mode, contract_file_number, activated_on, notes, photo_path, needs_review, review_note, team:teams(name), city:cities(name), branch:branches(name)",
     )
     .eq("id", captainId)
     .maybeSingle();
@@ -64,6 +65,7 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
     branch_id: captain.branch_id,
     status: captain.status,
     deduction_rate: captain.deduction_rate,
+    deduction_mode: captain.deduction_mode,
     contract_file_number: captain.contract_file_number,
     activated_on: captain.activated_on,
     notes: captain.notes,
@@ -109,6 +111,14 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
             <Row label="مجموعة واتساب" value={captain.whatsapp_group} />
             <Row label="المدينة" value={captain.city?.name ?? null} />
             <Row label="فرع التفعيل" value={captain.branch?.name ?? null} />
+            <Row
+              label="اتفاق الخصم"
+              value={
+                captain.deduction_mode === "per_order"
+                  ? `${DEDUCTION_SHORT.per_order} · ${captain.deduction_rate}`
+                  : DEDUCTION_SHORT[captain.deduction_mode]
+              }
+            />
             <Row label="المركبات" value={vehicleSummary(captain.vehicle_kinds)} />
             <Row label="تاريخ التفعيل" value={formatDay(captain.activated_on)} ltr />
             <Row label="رقم ملف العقد" value={captain.contract_file_number} ltr />
@@ -116,7 +126,7 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
               <Row
                 key={i}
                 label={`معرِّف: ${r.name || "—"}`}
-                value={[r.national_id, r.phone].filter(Boolean).join(" · ") || null}
+                value={[r.relation, r.phone].filter(Boolean).join(" · ") || null}
                 ltr
               />
             ))}

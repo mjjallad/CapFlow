@@ -18,11 +18,18 @@ export async function submitDeposit(_prev: DepositFormState, formData: FormData)
   const methodRaw = String(formData.get("method") ?? "");
   const depositedAtRaw = String(formData.get("depositedAt") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim();
+  const payoutRaw = String(formData.get("payoutDeduction") ?? "").trim().replace(",", ".");
 
   const amount = Number(amountRaw);
   if (!caseId) return { error: "الحالة مفقودة." };
   if (!amountRaw || !Number.isFinite(amount) || amount < 0) return { error: "أدخل مبلغًا صالحًا." };
   const method = METHODS.includes(methodRaw as PaymentMethod) ? (methodRaw as PaymentMethod) : null;
+
+  let payoutDeduction: number | null = null;
+  if (payoutRaw) {
+    payoutDeduction = Number(payoutRaw);
+    if (!Number.isFinite(payoutDeduction) || payoutDeduction < 0) return { error: "خصم المدفوعات غير صالح." };
+  }
 
   // datetime-local has no zone; interpret it in the tenant's timezone.
   let depositedAt: string | null = null;
@@ -41,6 +48,7 @@ export async function submitDeposit(_prev: DepositFormState, formData: FormData)
       method,
       depositedAt,
       note: note || null,
+      payoutDeduction,
     });
     revalidatePath(`/days/${businessDate}`);
     revalidatePath("/days");

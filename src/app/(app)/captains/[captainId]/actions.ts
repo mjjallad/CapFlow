@@ -11,6 +11,7 @@ import {
 } from "@/lib/captains/service";
 import { deleteVehicle, saveVehicle } from "@/lib/captains/vehicles";
 import { isDamageKind, type DamageMark } from "@/components/damage";
+import { isDeductionMode } from "@/components/deduction";
 import type { Database } from "@/lib/supabase/database.types";
 
 type CaptainStatus = Database["public"]["Enums"]["captain_status"];
@@ -35,7 +36,7 @@ function parseReferrers(raw: string): Referrer[] {
       .filter((r): r is Record<string, unknown> => typeof r === "object" && r !== null)
       .map((r) => ({
         name: String(r.name ?? ""),
-        national_id: String(r.national_id ?? ""),
+        relation: String(r.relation ?? ""),
         phone: String(r.phone ?? ""),
       }));
   } catch {
@@ -54,6 +55,7 @@ export async function saveCaptain(_prev: SaveState, formData: FormData): Promise
   };
   const statusRaw = String(formData.get("status") ?? "");
   const rate = Number(String(formData.get("deduction_rate") ?? "0").replace(",", "."));
+  const modeRaw = String(formData.get("deduction_mode") ?? "none");
   if (!Number.isFinite(rate) || rate < 0) return { error: "نسبة الخصم غير صالحة." };
 
   const vehicleKinds = formData
@@ -83,6 +85,7 @@ export async function saveCaptain(_prev: SaveState, formData: FormData): Promise
         branch_id: text("branch_id"),
         status: STATUSES.includes(statusRaw as CaptainStatus) ? (statusRaw as CaptainStatus) : "active",
         deduction_rate: rate,
+        deduction_mode: isDeductionMode(modeRaw) ? modeRaw : "none",
         contract_file_number: text("contract_file_number"),
         activated_on: activatedOn,
         notes: text("notes"),

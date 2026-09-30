@@ -319,6 +319,7 @@ export type Database = {
           city_id: string | null
           contract_file_number: string | null
           created_at: string
+          deduction_mode: Database["public"]["Enums"]["deduction_mode"]
           deduction_rate: number
           external_user_id: string | null
           full_name: string
@@ -349,6 +350,7 @@ export type Database = {
           city_id?: string | null
           contract_file_number?: string | null
           created_at?: string
+          deduction_mode?: Database["public"]["Enums"]["deduction_mode"]
           deduction_rate?: number
           external_user_id?: string | null
           full_name: string
@@ -379,6 +381,7 @@ export type Database = {
           city_id?: string | null
           contract_file_number?: string | null
           created_at?: string
+          deduction_mode?: Database["public"]["Enums"]["deduction_mode"]
           deduction_rate?: number
           external_user_id?: string | null
           full_name?: string
@@ -557,6 +560,7 @@ export type Database = {
           collected_amount: number | null
           completed_deliveries: number | null
           created_at: string
+          deduction_mode: Database["public"]["Enums"]["deduction_mode"]
           deduction_rate: number
           deposited_amount: number | null
           deposited_at: string | null
@@ -586,6 +590,7 @@ export type Database = {
           collected_amount?: number | null
           completed_deliveries?: number | null
           created_at?: string
+          deduction_mode?: Database["public"]["Enums"]["deduction_mode"]
           deduction_rate?: number
           deposited_amount?: number | null
           deposited_at?: string | null
@@ -615,6 +620,7 @@ export type Database = {
           collected_amount?: number | null
           completed_deliveries?: number | null
           created_at?: string
+          deduction_mode?: Database["public"]["Enums"]["deduction_mode"]
           deduction_rate?: number
           deposited_amount?: number | null
           deposited_at?: string | null
@@ -1611,6 +1617,7 @@ export type Database = {
           p_deposited_at: string
           p_method: Database["public"]["Enums"]["payment_method"]
           p_note: string
+          p_payout_deduction: number
         }
         Returns: Json
       }
@@ -1645,6 +1652,7 @@ export type Database = {
         | "vehicle"
         | "other"
       captain_status: "active" | "inactive" | "suspended"
+      deduction_mode: "none" | "per_order" | "payouts"
       deposit_status:
         | "awaiting_sijil"
         | "awaiting_receipt"
@@ -1860,6 +1868,7 @@ export const Constants = {
         "other",
       ],
       captain_status: ["active", "inactive", "suspended"],
+      deduction_mode: ["none", "per_order", "payouts"],
       deposit_status: [
         "awaiting_sijil",
         "awaiting_receipt",

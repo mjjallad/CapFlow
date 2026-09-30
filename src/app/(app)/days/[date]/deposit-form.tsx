@@ -9,11 +9,16 @@ export function DepositForm({
   businessDate,
   expectedAmount,
   currency,
+  payoutsAgreed,
+  payoutDeduction,
 }: {
   caseId: string;
   businessDate: string;
   expectedAmount: number | null;
   currency: string;
+  /** The captain deducts his app payouts, so the supervisor enters them here. */
+  payoutsAgreed: boolean;
+  payoutDeduction: number | null;
 }) {
   const [open, setOpen] = useState(false);
   const [state, action, pending] = useActionState<DepositFormState, FormData>(submitDeposit, {});
@@ -55,6 +60,20 @@ export function DepositForm({
           className="w-24 rounded border border-border bg-surface px-2 py-1 outline-none focus:border-accent"
         />
       </label>
+      {payoutsAgreed && (
+        <label className="flex flex-col gap-0.5">
+          <span className="text-muted">خصم المدفوعات</span>
+          <input
+            name="payoutDeduction"
+            type="number"
+            step="0.001"
+            min="0"
+            defaultValue={payoutDeduction ?? undefined}
+            dir="ltr"
+            className="w-24 rounded border border-border bg-surface px-2 py-1 outline-none focus:border-accent"
+          />
+        </label>
+      )}
       <label className="flex flex-col gap-0.5">
         <span className="text-muted">الطريقة</span>
         <select name="method" defaultValue="cash" className="rounded border border-border bg-surface px-2 py-1">

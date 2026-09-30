@@ -8,6 +8,7 @@ import { formatDateTime, formatMoney, weekdayArabic } from "@/lib/dates";
 import { DepositForm } from "./deposit-form";
 import { NoteForm } from "./note-form";
 import { vehicleSummary } from "@/components/vehicle";
+import { DEDUCTION_SHORT } from "@/components/deduction";
 
 const PAGE_SIZE = 200;
 
@@ -54,7 +55,7 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
   let request = supabase
     .from("deposit_cases")
     .select(
-      "id, status, collected_amount, expected_amount, deposited_amount, withdrawn_amount, allowed_deduction, deduction_rate, completed_deliveries, payment_method, is_late, deposited_at, review_reason, notes, supervisor_note, captain:captains!inner(id, external_user_id, full_name, phone, vehicle_kinds, team:teams(name))",
+      "id, status, collected_amount, expected_amount, deposited_amount, withdrawn_amount, allowed_deduction, deduction_rate, deduction_mode, payout_deduction, completed_deliveries, payment_method, is_late, deposited_at, review_reason, notes, supervisor_note, captain:captains!inner(id, external_user_id, full_name, phone, vehicle_kinds, team:teams(name))",
       { count: "exact" },
     )
     .eq("operating_day_id", day.operating_day_id!)
@@ -194,10 +195,13 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
                   <td className="px-3 py-2 tabular-nums" dir="ltr">{formatMoney(c.collected_amount, currency)}</td>
                   <td className="px-3 py-2 tabular-nums">
                     {c.completed_deliveries ?? "—"}
-                    {c.deduction_rate > 0 && (
+                    {c.deduction_mode === "per_order" && c.deduction_rate > 0 && (
                       <div className="text-xs text-muted" dir="ltr">
                         −{c.deduction_rate}/order
                       </div>
+                    )}
+                    {c.deduction_mode === "payouts" && (
+                      <div className="text-xs text-muted">{DEDUCTION_SHORT.payouts}</div>
                     )}
                   </td>
                   <td className="px-3 py-2 tabular-nums" dir="ltr">{formatMoney(c.expected_amount, currency)}</td>
@@ -226,7 +230,14 @@ export default async function DayPage({ params, searchParams }: PageProps<"/days
                   {canRecord && (
                     <td className="px-3 py-2">
                       {!["matched", "approved", "cancelled", "rejected"].includes(c.status) && (
-                        <DepositForm caseId={c.id} businessDate={date} expectedAmount={c.expected_amount} currency={currency} />
+                        <DepositForm
+                          caseId={c.id}
+                          businessDate={date}
+                          expectedAmount={c.expected_amount}
+                          currency={currency}
+                          payoutsAgreed={c.deduction_mode === "payouts"}
+                          payoutDeduction={c.payout_deduction}
+                        />
                       )}
                     </td>
                   )}

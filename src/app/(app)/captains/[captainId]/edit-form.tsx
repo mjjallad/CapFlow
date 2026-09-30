@@ -4,10 +4,11 @@ import { useActionState, useState } from "react";
 import { saveCaptain, type SaveState } from "./actions";
 import { VEHICLE_LABELS, VEHICLE_ORDER, type VehicleKind } from "@/components/vehicle";
 import { DateField } from "@/components/date-field";
+import { DEDUCTION_LABELS, DEDUCTION_MODES, type DeductionMode } from "@/components/deduction";
 import { advanceOnEnter } from "@/components/form-nav";
 
 type Option = { id: string; name: string };
-type Referrer = { name: string; national_id: string; phone: string };
+type Referrer = { name: string; relation: string; phone: string };
 
 export type CaptainFields = {
   id: string;
@@ -24,6 +25,7 @@ export type CaptainFields = {
   branch_id: string | null;
   status: "active" | "inactive" | "suspended";
   deduction_rate: number;
+  deduction_mode: DeductionMode;
   contract_file_number: string | null;
   activated_on: string | null;
   notes: string | null;
@@ -49,6 +51,7 @@ export function CaptainEditForm({
 }) {
   const [state, action, pending] = useActionState<SaveState, FormData>(saveCaptain, {});
   const [referrers, setReferrers] = useState<Referrer[]>(captain.referrers);
+  const [mode, setMode] = useState<DeductionMode>(captain.deduction_mode);
 
   const updateReferrer = (index: number, patch: Partial<Referrer>) =>
     setReferrers((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
@@ -84,7 +87,7 @@ export function CaptainEditForm({
 
         <div className="sm:col-span-2">
           <div className="mb-1.5 text-sm font-medium">المعرِّفون</div>
-          <p className="mb-2 text-xs text-muted">من عرّف الكابتن أو كفله — الاسم ورقمه وتلفونه.</p>
+          <p className="mb-2 text-xs text-muted">من عرّف الكابتن أو كفله — الاسم وصلة القرابة ورقم التلفون.</p>
           <div className="flex flex-col gap-2">
             {referrers.map((row, index) => (
               <div key={index} className="flex flex-wrap gap-2">
@@ -97,12 +100,12 @@ export function CaptainEditForm({
                   dir="auto"
                 />
                 <input
-                  value={row.national_id}
-                  onChange={(e) => updateReferrer(index, { national_id: e.target.value })}
-                  placeholder="الرقم"
+                  value={row.relation}
+                  onChange={(e) => updateReferrer(index, { relation: e.target.value })}
+                  placeholder="صلة القرابة"
                   disabled={readOnly}
                   className={`${inputClass} sm:w-40`}
-                  dir="ltr"
+                  dir="auto"
                 />
                 <input
                   value={row.phone}
@@ -127,7 +130,7 @@ export function CaptainEditForm({
             {!readOnly && (
               <button
                 type="button"
-                onClick={() => setReferrers((rows) => [...rows, { name: "", national_id: "", phone: "" }])}
+                onClick={() => setReferrers((rows) => [...rows, { name: "", relation: "", phone: "" }])}
                 className="self-start rounded-md border border-border px-3 py-1.5 text-sm hover:bg-background"
               >
                 + إضافة معرِّف
@@ -207,18 +210,40 @@ export function CaptainEditForm({
         <Field label="رقم ملف العقد" hint="رقم الملف الورقي الذي يُحفظ فيه العقد.">
           <input name="contract_file_number" defaultValue={captain.contract_file_number ?? ""} disabled={readOnly} className={inputClass} dir="ltr" />
         </Field>
-        <Field label="خصم لكل أوردر (دينار)" hint="0 = لا خصم. المتوقع إيداعه = المطلوب − الخصم × الأوردرات.">
-          <input
-            name="deduction_rate"
-            type="number"
-            step="0.5"
-            min="0"
-            defaultValue={captain.deduction_rate}
+        <Field label="اتفاق الخصم" hint="ما يحق للكابتن الاحتفاظ به من الكاش المحصَّل.">
+          <select
+            name="deduction_mode"
+            value={mode}
+            onChange={(e) => setMode(e.target.value as DeductionMode)}
             disabled={readOnly}
             className={inputClass}
-            dir="ltr"
-          />
+          >
+            {DEDUCTION_MODES.map((m) => (
+              <option key={m} value={m}>
+                {DEDUCTION_LABELS[m]}
+              </option>
+            ))}
+          </select>
         </Field>
+        {mode === "per_order" && (
+          <Field label="قيمة الخصم لكل أوردر (دينار)" hint="المتوقع إيداعه = المطلوب − القيمة × الأوردرات.">
+            <input
+              name="deduction_rate"
+              type="number"
+              step="0.5"
+              min="0"
+              defaultValue={captain.deduction_rate}
+              disabled={readOnly}
+              className={inputClass}
+              dir="ltr"
+            />
+          </Field>
+        )}
+        {mode === "payouts" && (
+          <p className="text-xs text-muted sm:col-span-2">
+            يُخصم ما للكابتن من التطبيق في ذلك اليوم، ويُدخله المشرف عند تسجيل الإيداع.
+          </p>
+        )}
       </Section>
 
       <Section title="ملاحظات">

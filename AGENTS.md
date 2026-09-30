@@ -64,7 +64,7 @@ business row carries `tenant_id` and is protected by RLS.
   `needs_review`.
 - `/captains/[captainId]` is the captain's profile: identity, team, WhatsApp group, photo
   two phone numbers, the referrers who vouched for them (`captains.referrers` jsonb:
-  name + national id + phone), contract file number, activation date, photo and notes —
+  name + relation + phone), contract file number, activation date, photo and notes —
   all editable under `captains.manage`. Scanned papers live in
   `captain_documents` + the private `captain-documents` bucket. Company cars and
   scooters are rows in `vehicles` (model, plate, year, colour, odometer, handover date,
@@ -111,6 +111,10 @@ this app. Where this file and that doc disagree, ask the user before changing be
   `actual_amount`), **Rider** `Rider Performance.xlsx` (`completed_deliveries`, only
   `Working Days = 1` rows are staged), captain deposit (manual now, WhatsApp later).
   The night Review CSV is not imported (COD supersedes it).
+- `captains.deduction_mode` is the agreement, snapshotted onto each case:
+  `none` (hands in everything), `per_order` (keeps `deduction_rate` × delivered orders),
+  `payouts` (keeps what the app owes him that day — the supervisor types the amount when
+  recording the deposit, e.g. collected 50, payouts 20, so he deposits 30).
 - Money: `expected = collected − deduction_rate × deliveries − payout_deduction`;
   `withdrawn = collected − deposited` is always recorded. deposited ≥ expected → `matched`,
   else `review_required` (needs a payouts screenshot). Rate lives on `captains.deduction_rate`

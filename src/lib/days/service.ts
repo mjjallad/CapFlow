@@ -123,6 +123,7 @@ export async function recordDeposit(input: {
   method: PaymentMethod | null;
   depositedAt: string | null;
   note: string | null;
+  payoutDeduction: number | null;
 }) {
   const admin = createAdminClient();
   // Tenant check happens here; the RPC trusts its caller.
@@ -144,6 +145,7 @@ export async function recordDeposit(input: {
     p_method: input.method,
     p_deposited_at: input.depositedAt,
     p_note: input.note,
+    p_payout_deduction: input.payoutDeduction,
   } as unknown as Database["public"]["Functions"]["record_deposit"]["Args"];
 
   const rpc = await admin.rpc("record_deposit", args);
