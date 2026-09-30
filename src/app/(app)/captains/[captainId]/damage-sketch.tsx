@@ -65,7 +65,7 @@ export function DamageSketch({
       <div
         ref={boxRef}
         onClick={addMark}
-        className={`relative w-full max-w-md overflow-hidden rounded-lg border border-border bg-background ${
+        className={`relative w-full max-w-2xl overflow-hidden rounded-lg border border-border bg-white ${
           readOnly ? "" : "cursor-crosshair"
         }`}
       >
