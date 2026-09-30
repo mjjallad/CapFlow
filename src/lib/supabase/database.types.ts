@@ -1415,7 +1415,9 @@ export type Database = {
           captain_id: string | null
           color: string | null
           created_at: string
+          damage_marks: Json
           id: string
+          inspected_on: string | null
           kind: Database["public"]["Enums"]["vehicle_kind"]
           made_year: number | null
           model: string | null
@@ -1430,7 +1432,9 @@ export type Database = {
           captain_id?: string | null
           color?: string | null
           created_at?: string
+          damage_marks?: Json
           id?: string
+          inspected_on?: string | null
           kind: Database["public"]["Enums"]["vehicle_kind"]
           made_year?: number | null
           model?: string | null
@@ -1445,7 +1449,9 @@ export type Database = {
           captain_id?: string | null
           color?: string | null
           created_at?: string
+          damage_marks?: Json
           id?: string
+          inspected_on?: string | null
           kind?: Database["public"]["Enums"]["vehicle_kind"]
           made_year?: number | null
           model?: string | null

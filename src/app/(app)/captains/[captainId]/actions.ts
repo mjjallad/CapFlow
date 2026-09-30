@@ -10,6 +10,7 @@ import {
   type Referrer,
 } from "@/lib/captains/service";
 import { deleteVehicle, saveVehicle } from "@/lib/captains/vehicles";
+import { isDamageKind, type DamageMark } from "@/components/damage";
 import type { Database } from "@/lib/supabase/database.types";
 
 type CaptainStatus = Database["public"]["Enums"]["captain_status"];
@@ -162,6 +163,29 @@ export async function removeCaptainDocument(_prev: DocumentState, formData: Form
 
 export type VehicleState = { error?: string; saved?: boolean };
 
+/** The condition-sketch marks travel as JSON from the client component. */
+function parseDamageMarks(raw: string): DamageMark[] {
+  try {
+    const parsed: unknown = JSON.parse(raw || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((m): m is Record<string, unknown> => typeof m === "object" && m !== null)
+      .map((m) => ({
+        x: clamp(Number(m.x)),
+        y: clamp(Number(m.y)),
+        kind: isDamageKind(m.kind) ? m.kind : "other",
+        note: String(m.note ?? ""),
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function clamp(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.min(1, Math.max(0, Math.round(value * 1000) / 1000));
+}
+
 const COMPANY_KINDS: VehicleKind[] = ["company_car", "company_scooter"];
 
 export async function saveVehicleAction(_prev: VehicleState, formData: FormData): Promise<VehicleState> {
@@ -185,11 +209,13 @@ export async function saveVehicleAction(_prev: VehicleState, formData: FormData)
   const madeYear = number("made_year");
   const odometer = number("odometer_km");
   const receivedOn = text("received_on");
+  const inspectedOn = text("inspected_on");
 
   if (Number.isNaN(madeYear) || (madeYear !== null && (madeYear < 1950 || madeYear > 2100)))
     return { error: "سنة الصنع غير صالحة." };
   if (Number.isNaN(odometer) || (odometer !== null && odometer < 0)) return { error: "عداد المشي غير صالح." };
   if (receivedOn && !/^\d{4}-\d{2}-\d{2}$/.test(receivedOn)) return { error: "تاريخ الاستلام غير صالح." };
+  if (inspectedOn && !/^\d{4}-\d{2}-\d{2}$/.test(inspectedOn)) return { error: "تاريخ الكشف غير صالح." };
 
   try {
     await saveVehicle({
@@ -205,6 +231,8 @@ export async function saveVehicleAction(_prev: VehicleState, formData: FormData)
         color: text("color"),
         odometer_km: odometer,
         received_on: receivedOn,
+        inspected_on: inspectedOn,
+        damage_marks: parseDamageMarks(String(formData.get("damage_marks") ?? "")),
         notes: text("notes"),
       },
     });

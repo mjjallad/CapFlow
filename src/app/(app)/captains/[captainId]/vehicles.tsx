@@ -3,6 +3,8 @@
 import { useActionState, useState } from "react";
 import { removeVehicle, saveVehicleAction, type VehicleState } from "./actions";
 import { VEHICLE_LABELS, type VehicleKind } from "@/components/vehicle";
+import { DamageSketch } from "./damage-sketch";
+import type { DamageMark } from "@/components/damage";
 
 export type VehicleRow = {
   id: string;
@@ -13,6 +15,8 @@ export type VehicleRow = {
   color: string | null;
   odometer_km: number | null;
   received_on: string | null;
+  inspected_on: string | null;
+  damage_marks: DamageMark[];
   notes: string | null;
 };
 
@@ -81,15 +85,25 @@ function VehicleForm({
   onCancel?: () => void;
 }) {
   const [state, action, pending] = useActionState<VehicleState, FormData>(saveVehicleAction, {});
+  // The sketch needs the kind live, before the row is saved.
+  const [kind, setKind] = useState<VehicleKind>(vehicle?.kind ?? "company_car");
+  const [damage, setDamage] = useState<DamageMark[]>(vehicle?.damage_marks ?? []);
 
   return (
     <form action={action} className="rounded-lg border border-border p-4">
       <input type="hidden" name="captainId" value={captainId} />
       {vehicle && <input type="hidden" name="vehicleId" value={vehicle.id} />}
+      <input type="hidden" name="damage_marks" value={JSON.stringify(damage)} />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <Field label="النوع">
-          <select name="kind" defaultValue={vehicle?.kind ?? "company_car"} disabled={readOnly} className={inputClass}>
+          <select
+            name="kind"
+            value={kind}
+            onChange={(e) => setKind(e.target.value as VehicleKind)}
+            disabled={readOnly}
+            className={inputClass}
+          >
             {COMPANY_KINDS.map((kind) => (
               <option key={kind} value={kind}>
                 {VEHICLE_LABELS[kind]}
@@ -139,11 +153,26 @@ function VehicleForm({
             dir="ltr"
           />
         </Field>
+        <Field label="تاريخ الكشف">
+          <input
+            name="inspected_on"
+            type="date"
+            defaultValue={vehicle?.inspected_on ?? ""}
+            disabled={readOnly}
+            className={inputClass}
+            dir="ltr"
+          />
+        </Field>
         <div className="sm:col-span-2">
           <Field label="ملاحظات المركبة">
             <textarea name="notes" defaultValue={vehicle?.notes ?? ""} disabled={readOnly} rows={2} className={`${inputClass} resize-y`} dir="auto" />
           </Field>
         </div>
+      </div>
+
+      <div className="mt-4 border-t border-border pt-4">
+        <div className="mb-2 text-sm font-medium">كروكي الضربات قبل التسليم</div>
+        <DamageSketch kind={kind} marks={damage} onChange={setDamage} readOnly={readOnly} />
       </div>
 
       {state.error && (

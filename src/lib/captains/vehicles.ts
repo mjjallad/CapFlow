@@ -2,6 +2,7 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database, Json } from "@/lib/supabase/database.types";
+import type { DamageMark } from "@/components/damage";
 
 type VehicleKind = Database["public"]["Enums"]["vehicle_kind"];
 
@@ -14,6 +15,8 @@ export type Vehicle = {
   color: string | null;
   odometer_km: number | null;
   received_on: string | null;
+  inspected_on: string | null;
+  damage_marks: DamageMark[];
   notes: string | null;
 };
 
@@ -23,12 +26,12 @@ export async function listVehicles(input: { tenantId: string; captainId: string 
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("vehicles")
-    .select("id, kind, model, plate_number, made_year, color, odometer_km, received_on, notes")
+    .select("id, kind, model, plate_number, made_year, color, odometer_km, received_on, inspected_on, damage_marks, notes")
     .eq("tenant_id", input.tenantId)
     .eq("captain_id", input.captainId)
     .order("created_at");
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map((v) => ({ ...v, damage_marks: (v.damage_marks ?? []) as unknown as DamageMark[] }));
 }
 
 function clean(value: string | null): string | null {
@@ -55,6 +58,8 @@ export async function saveVehicle(input: {
     color: clean(v.color),
     odometer_km: v.odometer_km,
     received_on: clean(v.received_on),
+    inspected_on: clean(v.inspected_on),
+    damage_marks: v.damage_marks as unknown as Json,
     notes: clean(v.notes),
   };
 
