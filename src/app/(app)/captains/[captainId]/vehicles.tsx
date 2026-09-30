@@ -29,10 +29,12 @@ export function CaptainVehicles({
   captainId,
   vehicles,
   readOnly,
+  outlineUrls,
 }: {
   captainId: string;
   vehicles: VehicleRow[];
   readOnly: boolean;
+  outlineUrls: Partial<Record<VehicleKind, string>>;
 }) {
   const [adding, setAdding] = useState(false);
 
@@ -48,7 +50,7 @@ export function CaptainVehicles({
       )}
 
       {vehicles.map((vehicle) => (
-        <VehicleForm key={vehicle.id} captainId={captainId} vehicle={vehicle} readOnly={readOnly} />
+        <VehicleForm key={vehicle.id} captainId={captainId} vehicle={vehicle} readOnly={readOnly} outlineUrls={outlineUrls} />
       ))}
 
       {adding && (
@@ -56,6 +58,7 @@ export function CaptainVehicles({
           captainId={captainId}
           vehicle={null}
           readOnly={readOnly}
+          outlineUrls={outlineUrls}
           onCancel={() => setAdding(false)}
         />
       )}
@@ -77,11 +80,13 @@ function VehicleForm({
   captainId,
   vehicle,
   readOnly,
+  outlineUrls,
   onCancel,
 }: {
   captainId: string;
   vehicle: VehicleRow | null;
   readOnly: boolean;
+  outlineUrls: Partial<Record<VehicleKind, string>>;
   onCancel?: () => void;
 }) {
   const [state, action, pending] = useActionState<VehicleState, FormData>(saveVehicleAction, {});
@@ -172,7 +177,7 @@ function VehicleForm({
 
       <div className="mt-4 border-t border-border pt-4">
         <div className="mb-2 text-sm font-medium">كروكي الضربات قبل التسليم</div>
-        <DamageSketch kind={kind} marks={damage} onChange={setDamage} readOnly={readOnly} />
+        <DamageSketch kind={kind} marks={damage} onChange={setDamage} readOnly={readOnly} outlineUrl={outlineUrls[kind]} />
       </div>
 
       {state.error && (

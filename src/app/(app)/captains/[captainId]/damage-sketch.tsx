@@ -13,11 +13,14 @@ export function DamageSketch({
   marks,
   onChange,
   readOnly,
+  outlineUrl,
 }: {
   kind: VehicleKind;
   marks: DamageMark[];
   onChange: (marks: DamageMark[]) => void;
   readOnly: boolean;
+  /** Set when an image in public/vehicle-sketch/ replaces the built-in drawing. */
+  outlineUrl?: string;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [pendingKind, setPendingKind] = useState<DamageKind>("dent");
@@ -66,7 +69,14 @@ export function DamageSketch({
           readOnly ? "" : "cursor-crosshair"
         }`}
       >
-        {kind === "company_scooter" ? <ScooterOutline /> : <CarOutline />}
+        {outlineUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- the drawing is whatever the office dropped in; no fixed size to optimize for
+          <img src={outlineUrl} alt="مخطط المركبة" className="w-full select-none" draggable={false} />
+        ) : kind === "company_scooter" ? (
+          <ScooterOutline />
+        ) : (
+          <CarOutline />
+        )}
 
         {marks.map((mark, index) => (
           <span

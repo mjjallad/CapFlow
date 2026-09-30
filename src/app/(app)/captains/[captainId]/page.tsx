@@ -12,6 +12,7 @@ import { PhotoForm } from "./photo-form";
 import { CaptainDocuments } from "./documents";
 import { CaptainVehicles } from "./vehicles";
 import { listVehicles } from "@/lib/captains/vehicles";
+import { sketchOutlineUrls } from "@/lib/captains/sketch";
 import { vehicleSummary } from "@/components/vehicle";
 
 const RECENT_DAYS = 14;
@@ -127,7 +128,7 @@ export default async function CaptainPage({ params }: PageProps<"/captains/[capt
       <CaptainEditForm captain={fields} teams={teams ?? []} cities={cities ?? []} readOnly={!canManage} />
 
       {(captain.vehicle_kinds ?? []).some((k) => k === "company_car" || k === "company_scooter") && (
-        <CaptainVehicles captainId={captain.id} vehicles={vehicles} readOnly={!canManage} />
+        <CaptainVehicles captainId={captain.id} vehicles={vehicles} readOnly={!canManage} outlineUrls={sketchOutlineUrls()} />
       )}
 
       <CaptainDocuments captainId={captain.id} documents={documents} readOnly={!canManage} timeZone={tz} />

@@ -58,7 +58,10 @@ business row carries `tenant_id` and is protected by RLS.
   notes) and the section only appears once the captain has a `company_*` vehicle kind.
   Each vehicle also carries a pre-handover condition sketch: `vehicles.damage_marks` holds
   `{x, y, kind, note}` points as a share (0–1) of the outline drawing, so they stay correct
-  at any size. The damage vocabulary lives in `src/components/damage.ts`. Both buckets are private
+  at any size. The damage vocabulary lives in `src/components/damage.ts`. Dropping
+  `car-top.*` or `scooter-side.*` into `public/vehicle-sketch/` replaces the built-in
+  vector outline with that picture (see `src/lib/captains/sketch.ts`); marks are shares
+  of the drawing, so swapping the picture never moves an existing mark. Both buckets are private
   and shown through short-lived signed URLs (`next/image` with `unoptimized`). Every edit
   writes an `audit_logs` row with only the changed fields.
 - `deposit_cases` has two foreign keys to `operating_days`, so embeds must name the
