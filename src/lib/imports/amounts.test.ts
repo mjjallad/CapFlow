@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseAmount, parseCount, parseSheetDate, shiftIsoDate } from "./amounts";
+import { parseAmount, parseCount, parseSheetDate, pullDateFromFilename, shiftIsoDate } from "./amounts";
 
 describe("parseAmount", () => {
   it("rounds float noise from Excel", () => {
@@ -39,5 +39,17 @@ describe("dates", () => {
     expect(shiftIsoDate("2026-09-18", -1)).toBe("2026-09-17");
     expect(shiftIsoDate("2026-01-01", -1)).toBe("2025-12-31");
     expect(parseSheetDate("nope")).toBeNull();
+  });
+});
+
+describe("pullDateFromFilename", () => {
+  it("reads the timestamp the platform stamps on a Rider export", () => {
+    expect(pullDateFromFilename("Rider Performance - 2026-09-30T133536.529.xlsx")).toBe("2026-09-30");
+    expect(pullDateFromFilename("Rider Performance - 2026-09-19T175607.972.xlsx")).toBe("2026-09-19");
+  });
+
+  it("returns null when the name carries no timestamp", () => {
+    expect(pullDateFromFilename("Rider details (98).xlsx")).toBeNull();
+    expect(pullDateFromFilename("report.xlsx")).toBeNull();
   });
 });

@@ -7,6 +7,7 @@ const COLUMNS = {
   riderId: ["rider_id", "rider id"],
   workingDays: ["working days", "working_days"],
   completedDeliveries: ["completed deliveries", "completed_deliveries"],
+  daysSinceLastShift: ["days since last shift", "days_since_last_shift"],
   totalOrders: ["total orders", "total_orders"],
   contract: ["contract_name", "contract name"],
 } as const;
@@ -55,7 +56,13 @@ function cellText(value: unknown): string | null {
 export function parseRiderRows(
   headers: string[],
   rows: { rowNumber: number; cells: Record<string, unknown> }[],
-): { rows: ParsedRiderRow[]; missingRequired: string[]; notWorking: number } {
+): {
+  rows: ParsedRiderRow[];
+  missingRequired: string[];
+  notWorking: number;
+  /** What the platform says about how far back the shift was, for the review screen. */
+  daysSinceLastShift: number | null;
+} {
   const mapping = resolveColumns(headers);
   const missingRequired = (["riderId", "workingDays", "completedDeliveries"] as const).filter((f) => !mapping[f]);
   const read = (cells: Record<string, unknown>, field: Field) => (mapping[field] ? cells[mapping[field]!] : undefined);
@@ -63,6 +70,7 @@ export function parseRiderRows(
   let notWorking = 0;
   const seen = new Map<string, number>();
   const parsed: ParsedRiderRow[] = [];
+  const shiftAges = new Map<number, number>();
 
   for (const { rowNumber, cells } of rows) {
     const workingDays = parseCount(read(cells, "workingDays"));
@@ -71,14 +79,20 @@ export function parseRiderRows(
       continue;
     }
 
+    const age = parseCount(read(cells, "daysSinceLastShift"));
+    if (age !== null && !Number.isNaN(age)) shiftAges.set(age, (shiftAges.get(age) ?? 0) + 1);
+
     const errors: string[] = [];
     const riderId = cellText(read(cells, "riderId"));
     const deliveries = parseCount(read(cells, "completedDeliveries"));
     const totalOrders = parseCount(read(cells, "totalOrders"));
 
+    // The platform leaves every delivery metric blank for a rider who logged in
+    // but delivered nothing, so an empty cell means zero, not a missing value.
+    const completed = deliveries === null ? 0 : deliveries;
+
     if (!riderId) errors.push("rider_id مفقود");
-    if (deliveries === null) errors.push("Completed Deliveries مفقود");
-    else if (Number.isNaN(deliveries) || deliveries < 0) errors.push("Completed Deliveries غير صالح");
+    if (Number.isNaN(completed) || completed < 0) errors.push("Completed Deliveries غير صالح");
 
     if (riderId && errors.length === 0) {
       const dup = seen.get(riderId);
@@ -93,7 +107,7 @@ export function parseRiderRows(
         errors.length === 0
           ? {
               external_user_id: riderId!,
-              completed_deliveries: deliveries as number,
+              completed_deliveries: completed,
               total_orders: totalOrders === null || Number.isNaN(totalOrders) ? null : totalOrders,
               contract_name: cellText(read(cells, "contract")),
             }
@@ -102,5 +116,9 @@ export function parseRiderRows(
     });
   }
 
-  return { rows: parsed, missingRequired, notWorking };
+  // The value nearly every working rider shares; a stray row should not decide it.
+  const daysSinceLastShift =
+    [...shiftAges.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+
+  return { rows: parsed, missingRequired, notWorking, daysSinceLastShift };
 }

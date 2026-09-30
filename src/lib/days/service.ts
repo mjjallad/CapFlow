@@ -6,6 +6,7 @@ import { loadApplicableBatch, stageImport } from "@/lib/imports/stage";
 import { readFirstSheet } from "@/lib/imports/excel";
 import { parseCodRows } from "@/lib/imports/cod/parse";
 import { parseRiderRows } from "@/lib/imports/rider/parse";
+import { pullDateFromFilename, shiftIsoDate } from "@/lib/imports/amounts";
 
 type PaymentMethod = Database["public"]["Enums"]["payment_method"];
 
@@ -56,6 +57,22 @@ export async function stageCodImport(input: { tenantId: string; userId: string; 
       return { rows };
     },
   });
+}
+
+/**
+ * The Rider report is pulled the day after the shift, so the business date is
+ * the day before the timestamp in its filename. Returns null when the name
+ * carries no timestamp.
+ */
+export function suggestRiderBusinessDate(fileName: string): string | null {
+  const pulled = pullDateFromFilename(fileName);
+  return pulled ? shiftIsoDate(pulled, -1) : null;
+}
+
+/** What the Rider file itself says about how far back the shift was. */
+export async function readRiderShiftAge(file: File): Promise<number | null> {
+  const sheet = await readFirstSheet(await file.arrayBuffer());
+  return parseRiderRows(sheet.headers, sheet.rows).daysSinceLastShift;
 }
 
 export async function stageRiderImport(input: { tenantId: string; userId: string; file: File; businessDate: string }) {

@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { parseRiderRows } from "./parse";
 
-const HEADERS = ["rider_id", "contract_name", "Working Days", "Total Orders", "Completed Deliveries"];
+const HEADERS = [
+  "rider_id",
+  "contract_name",
+  "Working Days",
+  "Total Orders",
+  "Completed Deliveries",
+  "Days since last Shift",
+];
 const row = (rowNumber: number, cells: Record<string, unknown>) => ({ rowNumber, cells });
 
 describe("parseRiderRows", () => {
@@ -19,13 +26,40 @@ describe("parseRiderRows", () => {
     ]);
   });
 
-  it("flags invalid delivery counts and duplicates", () => {
+  it("reads a blank delivery count as zero — the rider logged in but delivered nothing", () => {
     const { rows } = parseRiderRows(HEADERS, [
       row(2, { rider_id: "1", "Working Days": 1, "Completed Deliveries": null }),
+    ]);
+    expect(rows[0].errors).toEqual([]);
+    expect(rows[0].normalized?.completed_deliveries).toBe(0);
+  });
+
+  it("flags invalid delivery counts and duplicates", () => {
+    const { rows } = parseRiderRows(HEADERS, [
+      row(2, { rider_id: "1", "Working Days": 1, "Completed Deliveries": "abc" }),
       row(3, { rider_id: "2", "Working Days": 1, "Completed Deliveries": 3 }),
       row(4, { rider_id: "2", "Working Days": 1, "Completed Deliveries": 4 }),
     ]);
-    expect(rows[0].errors).toEqual(["Completed Deliveries مفقود"]);
+    expect(rows[0].errors).toEqual(["Completed Deliveries غير صالح"]);
     expect(rows[2].errors).toEqual(["rider_id مكرر (السطر 3)"]);
+  });
+});
+
+describe("shift age", () => {
+  it("reports the value nearly every working rider shares", () => {
+    const { daysSinceLastShift } = parseRiderRows(HEADERS, [
+      row(2, { rider_id: "1", "Working Days": 1, "Completed Deliveries": 5, "Days since last Shift": 2 }),
+      row(3, { rider_id: "2", "Working Days": 1, "Completed Deliveries": 7, "Days since last Shift": 2 }),
+      row(4, { rider_id: "3", "Working Days": 1, "Completed Deliveries": 3, "Days since last Shift": 1 }),
+      row(5, { rider_id: "4", "Working Days": 0 }),
+    ]);
+    expect(daysSinceLastShift).toBe(2);
+  });
+
+  it("is null when the column is absent", () => {
+    const { daysSinceLastShift } = parseRiderRows(["rider_id", "Working Days", "Completed Deliveries"], [
+      row(2, { rider_id: "1", "Working Days": 1, "Completed Deliveries": 5 }),
+    ]);
+    expect(daysSinceLastShift).toBeNull();
   });
 });

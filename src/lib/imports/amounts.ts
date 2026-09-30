@@ -53,6 +53,15 @@ export function parseSheetDate(value: unknown): string | null {
   return null;
 }
 
+/**
+ * The Rider report carries no date column, but its filename is stamped with the
+ * moment it was pulled: "Rider Performance - 2026-09-30T133536.529.xlsx".
+ */
+export function pullDateFromFilename(fileName: string): string | null {
+  const match = fileName.match(/(\d{4})-(\d{2})-(\d{2})T/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : null;
+}
+
 export function shiftIsoDate(isoDate: string, days: number): string {
   const [y, m, d] = isoDate.split("-").map(Number);
   return toIsoDate(new Date(Date.UTC(y, m - 1, d + days)));

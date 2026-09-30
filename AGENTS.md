@@ -115,7 +115,11 @@ this app. Where this file and that doc disagree, ask the user before changing be
   COD file is dated D+1 but belongs to D (`suggestCodBusinessDate`).
 - Sources: **COD** `Rider details.xlsx` (authoritative attendance + `collected_amount` =
   `actual_amount`), **Rider** `Rider Performance.xlsx` (`completed_deliveries`, only
-  `Working Days = 1` rows are staged), captain deposit (manual now, WhatsApp later).
+  `Working Days = 1` rows are staged; a blank delivery count means the rider logged in
+  and delivered nothing, so it reads as zero), captain deposit (manual now, WhatsApp later).
+  The Rider file has no date column — `suggestRiderBusinessDate` takes the timestamp from
+  its filename and subtracts a day, and its `Days since last Shift` column is surfaced when
+  the suggestion is questioned.
   The night Review CSV is not imported (COD supersedes it).
 - `captains.deduction_mode` is the agreement, snapshotted onto each case:
   `none` (hands in everything), `per_order` (keeps `deduction_rate` × delivered orders),

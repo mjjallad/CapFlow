@@ -8,7 +8,9 @@ import {
   applyRiderBatch,
   stageCodImport,
   stageRiderImport,
+  readRiderShiftAge,
   suggestCodBusinessDate,
+  suggestRiderBusinessDate,
 } from "@/lib/days/service";
 
 export type DailyUploadState = { error?: string; suggestedDate?: string };
@@ -44,6 +46,17 @@ export async function uploadDailyFile(_prev: DailyUploadState, formData: FormDat
       }
       ({ batchId } = await stageCodImport({ tenantId: ctx.tenantId, userId: ctx.userId, file, businessDate }));
     } else {
+      // The Rider file has no date column, so its filename timestamp decides the day.
+      const suggested = suggestRiderBusinessDate(file.name);
+      if (suggested && suggested !== businessDate && !confirmDate) {
+        const age = await readRiderShiftAge(file);
+        const shiftNote =
+          age !== null && age !== 1 ? ` الملف يقول إن آخر شفت كان قبل ${age} أيام من سحبه.` : "";
+        return {
+          error: `تاريخ سحب الملف يشير إلى يوم ${suggested} بينما اخترت ${businessDate}.${shiftNote} صحّح التاريخ أو أكّد الاستيراد لليوم المختار.`,
+          suggestedDate: suggested,
+        };
+      }
       ({ batchId } = await stageRiderImport({ tenantId: ctx.tenantId, userId: ctx.userId, file, businessDate }));
     }
   } catch (err) {
