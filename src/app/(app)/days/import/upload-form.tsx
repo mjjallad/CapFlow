@@ -15,6 +15,8 @@ export function DailyUploadForm({ defaultDate }: { defaultDate: string }) {
 
   return (
     <form action={action} onKeyDown={advanceOnEnter} className="flex flex-col gap-4">
+      {/* Lets the action tell an untouched default from a deliberate choice. */}
+      <input type="hidden" name="offeredDate" value={state.suggestedDate ?? defaultDate} />
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-1 text-sm font-medium">نوع الملف</legend>
         {KINDS.map((k) => (
@@ -47,7 +49,8 @@ export function DailyUploadForm({ defaultDate }: { defaultDate: string }) {
           className="w-fit rounded-md border border-border bg-surface px-3 py-2 outline-none focus:border-accent"
         />
         <span className="text-muted">
-          اليوم الذي يبدأ 16:30 مساءً. ملف COD الصباحي يخص اليوم السابق لتاريخه.
+          يبدأ 16:00 عصرًا. اتركه كما هو وسيأخذ التطبيق اليوم من الملف نفسه — تاريخ COD
+          الداخلي، أو تاريخ سحب الرايدر ناقص عمر آخر شفت.
         </span>
       </label>
 

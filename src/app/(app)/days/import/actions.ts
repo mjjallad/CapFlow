@@ -21,44 +21,50 @@ export async function uploadDailyFile(_prev: DailyUploadState, formData: FormDat
   const ctx = await requireTenant("days.import");
   const file = formData.get("file");
   const kind = String(formData.get("kind") ?? "");
-  const businessDate = String(formData.get("businessDate") ?? "");
+  const picked = String(formData.get("businessDate") ?? "");
+  // What the form offered before anyone touched it. An untouched date must not
+  // outrank the day the file states for itself — that is how a COD and a Rider
+  // report for the same day once landed on two different days.
+  const offered = String(formData.get("offeredDate") ?? "");
   const confirmDate = formData.get("confirmDate") === "on";
 
   if (!(file instanceof File) || file.size === 0) return { error: "اختر الملف أولًا." };
   if (!ACCEPTED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext)))
     return { error: "الملف يجب أن يكون بصيغة .xlsx" };
   if (file.size > MAX_BYTES) return { error: "حجم الملف يتجاوز 10 ميغابايت." };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(businessDate)) return { error: "اختر تاريخ يوم التشغيل." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(picked)) return { error: "اختر تاريخ يوم التشغيل." };
   if (kind !== "cod" && kind !== "rider") return { error: "نوع الملف غير معروف." };
 
   let batchId: string;
   try {
+    // Each report states its own day: COD from its Date column minus one, Rider
+    // from the pull stamp in its filename minus the platform's shift age.
+    let stated: string | null;
+    let evidence = "";
+
     if (kind === "cod") {
-      // The COD file is dated with the pull date (business date + 1). Refuse a
-      // mismatch once so a wrong day is never imported by accident.
-      const suggested = await suggestCodBusinessDate(file);
-      if (suggested && suggested !== businessDate && !confirmDate) {
-        return {
-          error: `تاريخ الملف يشير إلى يوم ${suggested} بينما اخترت ${businessDate}. صحّح التاريخ أو أكّد الاستيراد لليوم المختار.`,
-          suggestedDate: suggested,
-        };
-      }
-      ({ batchId } = await stageCodImport({ tenantId: ctx.tenantId, userId: ctx.userId, file, businessDate }));
+      stated = await suggestCodBusinessDate(file);
     } else {
-      // The Rider file has no date column; its filename and shift age place it.
-      const { businessDate: suggested, pulledOn, daysSinceLastShift } = await suggestRiderBusinessDate(file);
-      if (suggested && suggested !== businessDate && !confirmDate) {
-        const age =
-          daysSinceLastShift !== null
-            ? ` الملف سُحب يوم ${pulledOn} ويقول إن آخر شفت كان قبل ${daysSinceLastShift} يومًا.`
-            : "";
-        return {
-          error: `الملف يخص يوم ${suggested} بينما اخترت ${businessDate}.${age} صحّح التاريخ أو أكّد الاستيراد لليوم المختار.`,
-          suggestedDate: suggested,
-        };
+      const rider = await suggestRiderBusinessDate(file);
+      stated = rider.businessDate;
+      if (rider.daysSinceLastShift !== null) {
+        evidence = ` الملف سُحب يوم ${rider.pulledOn} ويقول إن آخر شفت كان قبل ${rider.daysSinceLastShift} يومًا.`;
       }
-      ({ batchId } = await stageRiderImport({ tenantId: ctx.tenantId, userId: ctx.userId, file, businessDate }));
     }
+
+    const businessDate = stated && picked === offered ? stated : picked;
+
+    if (stated && stated !== businessDate && !confirmDate) {
+      return {
+        error: `الملف يخص يوم ${stated} بينما اخترت ${businessDate}.${evidence} صحّح التاريخ أو أكّد الاستيراد لليوم المختار.`,
+        suggestedDate: stated,
+      };
+    }
+
+    ({ batchId } =
+      kind === "cod"
+        ? await stageCodImport({ tenantId: ctx.tenantId, userId: ctx.userId, file, businessDate })
+        : await stageRiderImport({ tenantId: ctx.tenantId, userId: ctx.userId, file, businessDate }));
   } catch (err) {
     return { error: err instanceof Error ? err.message : "تعذّر معالجة الملف." };
   }
