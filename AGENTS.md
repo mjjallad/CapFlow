@@ -46,8 +46,11 @@ business row carries `tenant_id` and is protected by RLS.
   `requireTenant(permission)` from `src/lib/auth/context.ts`.
 - Dates are written with `src/components/date-field.tsx` (three boxes: day / month /
   year, left to right, so read right to left it is year, month, day) and displayed with
-  `formatDay` as dd/mm/yyyy. The native `<input type="date">` is not used: its format
-  follows the viewer's operating system.
+  `formatDay` as dd/mm/yyyy. The native `<input type="date">` is not used for typing —
+  its format follows the viewer's operating system — but a calendar button opens it via
+  `showPicker()` and copies the choice into the three boxes.
+- Forms attach `advanceOnEnter` from `src/components/form-nav.ts`: Enter moves to the
+  next field and submits from the last one, while a textarea keeps Enter for newlines.
 - `branches` holds the activation branches (أبو علندا, شفا بدران, وادي صقرة, الزرقاء);
   `captains.branch_id` points at one.
 - `/captains/[id]/vehicles/[vehicleId]/print` is the handover sheet: captain, vehicle,

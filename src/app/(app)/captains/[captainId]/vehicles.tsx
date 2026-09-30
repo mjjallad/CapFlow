@@ -7,6 +7,7 @@ import { VEHICLE_LABELS, type VehicleKind } from "@/components/vehicle";
 import { DamageSketch } from "./damage-sketch";
 import type { DamageMark } from "@/components/damage";
 import { DateField } from "@/components/date-field";
+import { advanceOnEnter } from "@/components/form-nav";
 
 export type VehicleRow = {
   id: string;
@@ -97,7 +98,7 @@ function VehicleForm({
   const [damage, setDamage] = useState<DamageMark[]>(vehicle?.damage_marks ?? []);
 
   return (
-    <form action={action} className="rounded-lg border border-border p-4">
+    <form action={action} onKeyDown={advanceOnEnter} className="rounded-lg border border-border p-4">
       <input type="hidden" name="captainId" value={captainId} />
       {vehicle && <input type="hidden" name="vehicleId" value={vehicle.id} />}
       <input type="hidden" name="damage_marks" value={JSON.stringify(damage)} />

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { saveCaptain, type SaveState } from "./actions";
 import { VEHICLE_LABELS, VEHICLE_ORDER, type VehicleKind } from "@/components/vehicle";
 import { DateField } from "@/components/date-field";
+import { advanceOnEnter } from "@/components/form-nav";
 
 type Option = { id: string; name: string };
 type Referrer = { name: string; national_id: string; phone: string };
@@ -53,7 +54,7 @@ export function CaptainEditForm({
     setReferrers((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
 
   return (
-    <form action={action} className="flex flex-col gap-5">
+    <form action={action} onKeyDown={advanceOnEnter} className="flex flex-col gap-5">
       <input type="hidden" name="captainId" value={captain.id} />
       <input type="hidden" name="referrers" value={JSON.stringify(referrers)} />
 

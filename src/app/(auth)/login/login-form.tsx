@@ -2,12 +2,13 @@
 
 import { useActionState } from "react";
 import { signIn, type LoginState } from "./actions";
+import { advanceOnEnter } from "@/components/form-nav";
 
 export function LoginForm({ next }: { next: string }) {
   const [state, action, pending] = useActionState<LoginState, FormData>(signIn, {});
 
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form action={action} onKeyDown={advanceOnEnter} className="flex flex-col gap-4">
       <input type="hidden" name="next" value={next} />
 
       <label className="flex flex-col gap-1.5 text-sm">
