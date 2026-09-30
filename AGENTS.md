@@ -113,14 +113,23 @@ this app. Where this file and that doc disagree, ask the user before changing be
 ## Daily cycle (business rules, confirmed with the operator)
 - Operating day D runs 16:00 on D → 16:00 on D+1 (`tenants.day_start_time`). The morning
   COD file is dated D+1 but belongs to D (`suggestCodBusinessDate`).
-- Sources: **COD** `Rider details.xlsx` (authoritative attendance + `collected_amount` =
-  `actual_amount`), **Rider** `Rider Performance.xlsx` (`completed_deliveries`, only
-  `Working Days = 1` rows are staged; a blank delivery count means the rider logged in
-  and delivered nothing, so it reads as zero), captain deposit (manual now, WhatsApp later).
-  The Rider file has no date column — `suggestRiderBusinessDate` takes the timestamp from
-  its filename and subtracts a day, and its `Days since last Shift` column is surfaced when
-  the suggestion is questioned.
-  The night Review CSV is not imported (COD supersedes it).
+### The two daily reports, and which one wins
+**COD** (`Rider details.xlsx`, morning) is the most accurate report the parent platform
+sends and the authority for the day: everyone in it worked, `actual_amount` is what he
+owes, and the method follows from it — an amount means **cash**, zero means **visa**.
+Anyone absent from COD is off (مجاز) as far as COD is concerned.
+
+**Rider Performance** (noon) *completes* COD, it never overrides it:
+- it supplies `completed_deliveries` for everyone COD already listed;
+- a rider COD left out but who has orders here was working **card-only**, so he gets a
+  case with `collected_amount` 0, `payment_method` visa, already matched.
+
+Only `Working Days = 1` rows are staged, and a blank delivery count means the rider
+logged in and delivered nothing, so it reads as zero. The file has no date column —
+`suggestRiderBusinessDate` takes the timestamp from its filename and subtracts a day,
+and its `Days since last Shift` column is surfaced when the suggestion is questioned.
+The night Review CSV is not imported (COD supersedes it). The captain's own deposit is
+the third source (manual now, WhatsApp later).
 - `captains.deduction_mode` is the agreement, snapshotted onto each case:
   `none` (hands in everything), `per_order` (keeps `deduction_rate` × delivered orders),
   `payouts` (keeps what the app owes him that day — the supervisor types the amount when
